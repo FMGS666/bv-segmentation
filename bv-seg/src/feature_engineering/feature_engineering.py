@@ -147,7 +147,7 @@ class BVSegFeatureEngineering(object):
     def pad_image(
             self,
             image_array: np.ndarray
-        ) -> np.ndarray:
+        ) -> tuple[np.ndarray]:
         """
         Arguments:
             * `self`
@@ -196,7 +196,7 @@ class BVSegFeatureEngineering(object):
                 self.patch_size
             )
         )
-        return slices
+        return patches
     
     def transform(
             self,
