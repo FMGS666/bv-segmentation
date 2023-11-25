@@ -97,3 +97,4 @@ python -m bv-seg [args] [--flags]
 -  [x] Check the `patchify` library for patching the images insteadof doing it manually
 - [] Define models and write training utilities
 - [] Write the `bv-seg/__main__.py` file for running the module
+- [] Check better the `bv-seg/training/training.py` file for bugs and write its documentation + add wandb logging 
