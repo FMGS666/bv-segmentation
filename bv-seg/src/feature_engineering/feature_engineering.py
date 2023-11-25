@@ -27,7 +27,7 @@ Example of use:
 >>>         # define your transformations here
 >>>     ]
 >>> )
->>> feature_engineering = BloodVesselSegFeatureEngineering(
+>>> feature_engineering = BVSegFeatureEngineering(
 >>>     transformations = transformations, 
 >>>     slice_images = True, 
 >>>     slice_size = 256
@@ -50,7 +50,7 @@ from albumentations import Compose
 from ..file_utils.tif_file_loader import TifFileLoader
 
 
-class BloodVesselSegFeatureEngineering(object):
+class BVSegFeatureEngineering(object):
     def __init__(
             self,
             transformations: Compose | None = None,

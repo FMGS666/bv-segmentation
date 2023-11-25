@@ -3,6 +3,9 @@
 This repository contains the code that we will use for the Blood Vessel Segmentation competition hosted on `kaggle.com`
 
 
+<video src="animations/kidney_1_dense.mp4" controls="controls" style="max-width: 730px;">
+</video>
+
 ---
 
 The data of this competition is under the form of three dimensional tomographies of the human kidneys. 
@@ -36,20 +39,55 @@ We have the following two different datasets:
 * 1) `kidney_5`
 * 2) `kidney_6`
 
----
+## 0. Cloning the repository
 
-Here's the example animation for the `kidney_1_dense` dataset
+To clone the repository, run the following command:
 
-<video src="animations/kidney_1_dense.mp4" controls="controls" style="max-width: 730px;">
-</video>
+```
+git clone git@github.com:FMGS666/bv-segmentation.git;
+```
+Then `cd` into the cloned repository:
+```
+cd bv-segmentation;
+```
 
+## 1. Installing the required libraries
 
----
-
-## Installing the required libraries
-
-Using anaconda or miniconda, the working environment can be created by `cd`ing into the repository root folder and run:
+Using anaconda or miniconda, the working environment can be created by running:
  
 ```
-conda env create -f env.yml
+conda env create -f env.yml;
+```
+
+## 2. Downloading the data
+
+The data can be downloaded folder by using the following command from the `kaggle` api:
+
+```
+kaggle competitions download -c blood-vessel-segmentation;
+```
+
+Then, you can unzip the `blood-vessel-segmentation.zip` into the `bv-segmentation/data` folder by running:
+
+```
+unzip blood-vessel-segmentation.zip -d data;
+rm blood-vessel-segmentation.zip;
+```
+
+Note: This commands were not tested, please report if they are not working.
+
+## 3. Structure of the project
+
+All the code that in this repository can be used via the `bv-seg` module.
+The source code is placed into the `bv-seg/src` folder, and organized into different subfolders.
+
+For a better description of the structure of the `bv-seg/src` folder, confront the `bv-seg/README.md` file.
+
+
+## 4. Running the module
+
+For now, we do not have a `__main__.py` file yet. Anyway, it will (should) be possible to run the `sv-seg` module from the root of the project's repository by running:
+
+```
+python -m bv-seg [args] [--flags]
 ```

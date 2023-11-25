@@ -24,14 +24,14 @@ Example of use:
 >>>         # define your transformations here
 >>>     ]
 >>> )
->>> feature_engineering = BloodVesselSegFeatureEngineering(
+>>> feature_engineering = BVSegFeatureEngineering(
 >>>     transformations = transformations, 
 >>>     slice_images = True, 
 >>>     slice_size = 256
 >>> )
 >>> image_paths = kidney_1_dense_iterable_folder.slice_images_paths
 >>> masks_paths = kidney_1_dense_iterable_folder.slice_masks_paths
->>> dataset = BloodVesselSegDataset(
+>>> dataset = BVSegDataset(
 >>>      image_paths, 
 >>>      masks_paths, 
 >>>      feature_engineering
@@ -45,12 +45,12 @@ from torch.utils.data import Dataset
 
 from ..feature_engineering.feature_engineering import BloodVesselSegFeatureEngineering
 
-class BloodVesselSegDataset(Dataset):
+class BVSegDataset(Dataset):
     def __init__(
             self,
             images_files_list: list[str],
             masks_files_list: list[str],
-            image_preprocesser: BloodVesselSegFeatureEngineering
+            image_preprocesser: BVSegFeatureEngineering
         ) -> None:
         """
         Arguments:
@@ -63,7 +63,7 @@ class BloodVesselSegDataset(Dataset):
             * `None`
         
         """
-        super(BloodVesselSegDataset, self).__init__()
+        super(BVSegDataset, self).__init__()
         self.images_files_list = images_files_list
         self.masks_files_list = masks_files_list
         self.image_preprocesser = image_preprocesser
