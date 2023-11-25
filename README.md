@@ -83,6 +83,14 @@ The source code is placed into the `bv-seg/src` folder, and organized into diffe
 
 For a better description of the structure of the `bv-seg/src` folder, confront the `bv-seg/README.md` file.
 
+The `models` directory is the one where all the trained models' state dictionaries will be dumped. In this way, we will be able to load them later to make inference on the test images.
+
+The `data` directory, with its self-explainatory name, should contain the data for the project. The images are too big to be store in github (check point 2 of this readme).
+
+The `animations` directory contains the `.mp4` files of the 3D animations of the kidneys.
+
+The `.tmp` contains temporary files used for logging the `stdout` of the training runs.
+
 
 ## 4. Running the module
 
