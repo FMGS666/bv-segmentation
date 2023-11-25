@@ -29,8 +29,8 @@ Example of use:
 >>> )
 >>> feature_engineering = BVSegFeatureEngineering(
 >>>     transformations = transformations, 
->>>     slice_images = True, 
->>>     slice_size = 256
+>>>     patch = True, 
+>>>     patch_size = 256
 >>> )
 >>> transformation_results_dictionary = feature_engineering.transform(
 >>>     kidney_1_dense_image,
@@ -45,7 +45,9 @@ Example of use:
 
 
 import numpy as np
+
 from albumentations import Compose
+from patchify import patchify, unpatchify
 
 from ..file_utils.tif_file_loader import TifFileLoader
 
@@ -54,8 +56,8 @@ class BVSegFeatureEngineering(object):
     def __init__(
             self,
             transformations: Compose | None = None,
-            slice_images: bool = True,
-            slice_size: int = 128,
+            patch: bool = True,
+            patch_size: int = 128,
             image_normalization_factor: np.float32 = np.float32(2**16), # this is the maximum pixel values of the images in our dataset
             mask_normalization_factor: np.float32 = np.float32(255), # only one, binary mask
         ) -> None:
@@ -63,9 +65,8 @@ class BVSegFeatureEngineering(object):
         Arguments:
             * `self`
             * `transformations: Compose | None` -> the `albumentation.Compose` transformations to be applied to the images
-            * `slice_images: bool` -> whether to slice images
-            * `slice_size: int` -> the size of the slices (used if `slice_images == True`)
-            * `slice_size: int` -> the size of the slices (used if `slice_images == True`)
+            * `patch: bool` -> whether to slice images
+            * `patch_size: int` -> the size of the slices (used if `patch == True`)
             * `image_normalization_factor: np.float32` -> the normalization factor for the images' pixels
             * `mask_normalization_factor: np.float32` -> the normalization factor for the masks' pixels
         Returns: 
@@ -73,8 +74,8 @@ class BVSegFeatureEngineering(object):
 
         """
         self.transformations = transformations
-        self.slice_size = slice_size
-        self.slice = slice_images
+        self.patch_size = patch_size
+        self.patch = patch
         self.image_normalization_factor = image_normalization_factor
         self.mask_normalization_factor = mask_normalization_factor
 
@@ -120,7 +121,7 @@ class BVSegFeatureEngineering(object):
             * `image: np.ndarray` -> the array containing the image to pad
 
         Returns:
-            * `tuple` -> the target paddings for making the shape divisible by `self.slice_size`
+            * `tuple` -> the target paddings for making the shape divisible by `self.patch_size`
                 - `tuple[0]`: `tuple` -> the target vertical paddings
                     - `tuple[0][0]`: `int` -> the target upper vertical padding
                     - `tuple[0][1]`: `int` -> the target lower vertical padding
@@ -129,8 +130,8 @@ class BVSegFeatureEngineering(object):
                     - `tuple[1][1]`: `int` -> the target right horizontal padding
         """
         image_height, image_width = image_array.shape
-        num_pixels_to_pad_vertically = self.slice_size - image_height % self.slice_size
-        num_pixels_to_pad_horizontally = self.slice_size - image_width % self.slice_size
+        num_pixels_to_pad_vertically = self.patch_size - image_height % self.patch_size
+        num_pixels_to_pad_horizontally = self.patch_size - image_width % self.patch_size
         if num_pixels_to_pad_vertically % 2 == 0:
             v_pad = (num_pixels_to_pad_vertically // 2, num_pixels_to_pad_vertically // 2)
         else: 
@@ -172,11 +173,11 @@ class BVSegFeatureEngineering(object):
         )
         padding_mask[padding_indexes] = 0
         padded_array[padding_indexes] = 0
-        assert padded_array.shape[0] % self.slice_size == 0, print(f"{padded_array.shape[0] % self.slice_size=}")
-        assert padded_array.shape[1] % self.slice_size == 0, print(f"{padded_array.shape[1] % self.slice_size=}")
+        assert padded_array.shape[0] % self.patch_size == 0, print(f"{padded_array.shape[0] % self.patch_size=}")
+        assert padded_array.shape[1] % self.patch_size == 0, print(f"{padded_array.shape[1] % self.patch_size=}")
         return padded_array, padding_mask
 
-    def slice_image(
+    def patch_image(
             self,
             padded_image_array: np.ndarray
         ) -> np.ndarray:
@@ -188,19 +189,12 @@ class BVSegFeatureEngineering(object):
         Returns:
             * `np.ndarray` -> the sliced image array 
         """
-        n_vertical_slices = padded_image_array.shape[0] // self.slice_size
-        n_horizontal_slices = padded_image_array.shape[1] // self.slice_size
-        slices = []
-        for v_slice_idx in range(n_vertical_slices):
-            for h_slice_idx in range(n_horizontal_slices):
-                v_lower_index = v_slice_idx * self.slice_size
-                v_upper_index = (v_slice_idx + 1) * self.slice_size
-                h_lower_index = h_slice_idx * self.slice_size
-                h_upper_index = (h_slice_idx + 1) * self.slice_size
-                slice_ = padded_image_array[v_lower_index: v_upper_index, h_lower_index: h_upper_index]
-                slices.append(slice_)
-        slices = np.stack(
-            slices
+        patches = patchify(
+            padded_image_array, 
+            (
+                self.patch_size,
+                self.patch_size
+            )
         )
         return slices
     
@@ -238,20 +232,20 @@ class BVSegFeatureEngineering(object):
                 image = image_array 
             )["image"]
             result_dictionary["image"] = image_array
-        if self.slice:
+        if self.patch:
             image_array, is_padding_mask = self.pad_image(
                 image_array
             )
             mask_array, _ = self.pad_image(
                 mask_array
             )
-            image_array = self.slice_image(
+            image_array = self.patch_image(
                 image_array
             )
-            mask_array = self.slice_image(
+            mask_array = self.patch_image(
                 mask_array
             )
-            is_padding_mask = self.slice_image(
+            is_padding_mask = self.patch_image(
                 is_padding_mask
             )
             result_dictionary["image"] = image_array
