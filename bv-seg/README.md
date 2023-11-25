@@ -74,3 +74,14 @@ The `model_selection` folder contains the following two files:
 * 2) `utils.py`*
 
 (1) contains the definition of the `k_fold_split_iterable_folder` function, that, given  a `Tif3DVolumeIterableFolder` object, returns a generator with the training and validation indexes for each split. Note that this function will only return a *generator  of the indexes of the splits* and not the splits themselves (i.e.: the **actual** file names). This is why in (2), the `retrieve_filenames_from_split_indexes` is defined. This function takes the `Tif3DVolumeIterableFolder` object and the generator, output of the `k_fold_split_iterable_folder` functions, retrievs the file names from the indexes, and returns them organized inside a dictionary. For a better description of their usage, check the module's documentation.
+
+---
+
+### `training`
+
+The `training` folder contains the following file:
+
+* 1) `training.py`
+
+This file contains the definition of the `BVSegTraining`, an object for running the training sessions.
+For a better description of its functionalities and its use, check the module's documentation.

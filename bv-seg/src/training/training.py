@@ -11,7 +11,7 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.optim import Optimizer
 from pytorch_memlab import profile
 
-class BloodVesselSegTraining(object):
+class BVSegTraining(object):
     def __init__(
             self,
             model: nn.Module,
