@@ -46,16 +46,23 @@ Example of use:
 
 import numpy as np
 
-from albumentations import Compose
+from typing import Union
+from albumentations import Compose as ComposeAlb
+from monai.transforms import Compose as ComposeMonAi
 from patchify import patchify, unpatchify
 
-from ..file_utils.tif_file_loader import TifFileLoader
+from ..file_loaders.tif_file_loader import TifFileLoader
 
+
+ComposedTransformation = Union[
+    ComposeAlb,
+    ComposeMonAi
+]
 
 class BVSegFeatureEngineering(object):
     def __init__(
             self,
-            transformations: Compose | None = None,
+            transformations: ComposedTransformation | None = None,
             patch: bool = True,
             patch_size: int = 128,
             image_normalization_factor: np.float32 = np.float32(2**16), # this is the maximum pixel values of the images in our dataset
@@ -64,7 +71,7 @@ class BVSegFeatureEngineering(object):
         """
         Arguments:
             * `self`
-            * `transformations: Compose | None` -> the `albumentation.Compose` transformations to be applied to the images
+            * `transformations: ComposedTransformation | None` -> the `albumentation.Compose` transformations to be applied to the images
             * `patch: bool` -> whether to slice images
             * `patch_size: int` -> the size of the slices (used if `patch == True`)
             * `image_normalization_factor: np.float32` -> the normalization factor for the images' pixels

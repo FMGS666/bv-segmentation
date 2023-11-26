@@ -53,7 +53,7 @@ class TifFileLoader(object):
             * `None`
 
         """
-        self.tif_file_path = tif_file
+        self.tif_file_path = tif_file_path
         self.image = Image.open(
             self.tif_file_path
         )    

@@ -34,7 +34,7 @@ Example of use:
 from sklearn.model_selection import KFold
 from typing import Iterable, Callable, Generator, Any
 
-from ..file_utils.tif_iterable_folder import Tif3DVolumeIterableFolder
+from ..file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
 
 def k_fold_split_iterable_folder(
         dataset_folder: Tif3DVolumeIterableFolder,

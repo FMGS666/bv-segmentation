@@ -5,11 +5,10 @@ f"""
 import wandb
 
 from pathlib import Path
-from typing import Iterable, Callable
+from typing import Iterable, Callable, Any
 from torch import nn, Tensor
 from torch.optim.lr_scheduler import LRScheduler 
 from torch.optim import Optimizer
-from pytorch_memlab import profile
 
 class BVSegTraining(object):
     def __init__(
@@ -32,13 +31,12 @@ class BVSegTraining(object):
             plot_style: str = "dark_background",
             patch_image: bool = True,
             split_size: int = 64,
-            metrics: dict[str, tuple[Callable, bool]] | None = None,
-            metric_to_monitor: str = "validation_loss",
-            normalize_metrics: bool = False,
             tollerance: float = 1e-5,
             amp: bool = False,
-            gradient_clipping: float = 1.0,
-            relative_improvement: bool = False 
+            gradient_clipping: float | None = 1.0,
+            relative_improvement: bool = False,
+            scale_grad: bool = True,
+            verbose: bool = True  
         ) -> None:
         self.model = model
         self.train_data_loader = train_data_loader
@@ -52,10 +50,9 @@ class BVSegTraining(object):
         self.sched_step_after_train = sched_step_after_train
         self.model_name = model_name
         self.dump_dir = dump_dir
-        self.metrics = metrics
-        self.metric_to_monitor = metric_to_monitor
-        self.normalize_metrics = normalize_metrics
         self.relative_improvement = relative_improvement
+        self.scale_grad = scale_grad
+        self.verbose = verbose
         if optimizer_kwargs is None :
             optimizer_kwargs = dict()
             optimizer_kwargs["lr"] = self.initial_learning_rate
@@ -72,16 +69,6 @@ class BVSegTraining(object):
             "train_loss": [9e20],
             "validation_loss": [9e20],
         }
-        if self.metrics is not None:
-            for metric_name, (_, minimize) in self.metrics.items():
-                metric_name_train = "train_" + metric_name
-                metric_name_validation = "validation_" + metric_name
-                if minimize:
-                    self.history[metric_name_train] = [9e20]
-                    self.history[metric_name_validation] = [9e20]
-                else:
-                    self.history[metric_name_train] = [0.0]
-                    self.history[metric_name_validation] = [0.0]
         self.n_epochs_with_no_progress = 0
         self.n_saved_models = 0
         self.log_dir = log_dir
@@ -114,15 +101,6 @@ class BVSegTraining(object):
             kv.append(f"{k}-{v}")
         return "_".join(kv)
 
-    @staticmethod
-    def display_metrics(
-            metrics_dictionary: dict[str, float]
-        ) -> None:
-        for metric_name, metric_value in metrics_dictionary.items():
-            print(f"{metric_name} = {metric_value}", end = "\t")
-        print("\n")
-
-    @profile
     def prepare(
             self
         ) -> None: 
@@ -176,8 +154,8 @@ class BVSegTraining(object):
     def track_validation_progress(
             self,
         ) -> bool:
-        current_best_loss = min(self.history[self.metric_to_monitor][:-1])
-        current_loss = self.history[self.metric_to_monitor][-1]
+        current_best_loss = min(self.history["validation_loss"][:-1])
+        current_loss = self.history["validation_loss"][-1]
         if self.relative_improvement:
             return (current_best_loss - current_loss) / current_best_loss > self.tollerance
         return (current_best_loss - current_loss) > self.tollerance
@@ -217,167 +195,23 @@ class BVSegTraining(object):
             metrics_values[metric_name] = metric_value
         return metrics_values
 
-    @profile
     def training_pass(
             self,
             batch: dict
-        ) -> float:
-        batch_images = batch["image"].to(self.device)
-        batch_masks = batch["mask"].to(self.device)
-        if self.patch:
-            batch_is_padding = batch["padding"].to(self.device)
-            batch_images = batch_images.view(
-                -1,
-                1,
-                self.split_size,
-                self.split_size
-            )
-            batch_masks = batch_masks.view(
-                -1,
-                1,
-                self.split_size,
-                self.split_size
-            )
-            batch_is_padding = batch_is_padding.view(
-                -1,
-                1,
-                self.split_size,
-                self.split_size
-            )
-        with torch.autocast(self.device, enabled=self.amp):
-            predicted_mask = self.model.forward(
-                batch_images
-            ).float()
-            if self.patch:
-                loss = self.loss(
-                    predicted_mask, 
-                    batch_masks.float()
-                )
-                del batch_is_padding
-                gc.collect()
-            else: 
-                loss = self.loss(
-                    predicted_mask, 
-                    batch_masks
-                )
-        self.optimizer.zero_grad(set_to_none=True)
-        self.grad_scaler.scale(loss).backward()
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.gradient_clipping)
-        self.grad_scaler.step(self.optimizer)
-        self.grad_scaler.update()
-        if self.scheduler and self.sched_step_after_train:
-            self.scheduler.step()
-        loss_value = loss.item()
-        metrics_values = dict()
-        if self.metrics is not None:
-            metrics_values = self.compute_metrics(predicted_mask, batch_masks, True)
-        metrics_values["train_loss"] = loss_value
-        del batch, batch_images, loss, predicted_mask, batch_masks
-        gc.collect()
-        torch.cuda.empty_cache()
-        return metrics_values
+        ) -> Any:
+        raise NotImplementedError
     
-    @profile
     def validation_pass(
             self,
             batch: dict
-        ) -> float:
-        batch_images = batch["image"].to(self.device)
-        batch_masks = batch["mask"].to(self.device)
-        if self.patch:
-            batch_is_padding = batch["padding"].to(self.device)
-            batch_images = batch_images.view(
-                -1,
-                1,
-                self.split_size,
-                self.split_size
-            )
-            batch_masks = batch_masks.view(
-                -1,
-                1,
-                self.split_size,
-                self.split_size
-            )
-            batch_is_padding = batch_is_padding.view(
-                -1,
-                1, 
-                self.split_size,
-                self.split_size
-            )
-            
-        predicted_mask = self.model.forward(
-            batch_images
-        )
-        if self.patch:
-            loss = self.loss(
-                predicted_mask, 
-                batch_masks.float()
-            )
-            del batch_is_padding
-            gc.collect()
-        else: 
-            loss = self.loss(
-                predicted_mask, 
-                batch_masks.float()
-            )
-        if self.scheduler and not self.sched_step_after_train:
-            self.scheduler.step()
-        loss_value = loss.item()
-        metrics_values = dict()
-        if self.metrics is not None:
-            metrics_values = self.compute_metrics(predicted_mask, batch_masks, False)
-        metrics_values["validation_loss"] = loss_value
-        del batch, batch_images, loss, predicted_mask, batch_masks
-        gc.collect()
-        torch.cuda.empty_cache()
-        return metrics_values
+        ) -> Any:
+        raise NotImplementedError
     
-    @profile
     def epoch(
             self,
             epoch: int
-        ) -> tuple[float]:
-        current_metrics = {
-            metric_name: 0.0 for metric_name in self.history.keys()
-        }
-        self.model.train(
-            True
-        )
-        print("Performing training pass")
-        with tqdm(total=len(train_data_loader)) as pbar:
-            for idx, batch in enumerate(train_data_loader):
-                training_metrics  = self.training_pass(
-                    batch
-                )
-                for metric_name, metric_value in training_metrics.items():
-                    current_metrics[metric_name] += metric_value
-                del batch, training_metrics
-                gc.collect()
-                torch.cuda.empty_cache()
-                pbar.update(1)
-        print("Performing validation pass")
-        self.model.eval()
-        with tqdm(total=len(val_data_loader)) as pbar:
-            with torch.no_grad():
-                for batch in val_data_loader:
-                    validation_metrics = self.validation_pass(
-                        batch
-                    )
-                    for metric_name, metric_value in validation_metrics.items():
-                        current_metrics[metric_name] += metric_value
-                    pbar.update()
-                    del batch, validation_metrics
-                    gc.collect()
-                    torch.cuda.empty_cache()
-        for metric_name, metric_value in current_metrics.items():
-            if "train" in metric_name and self.normalize_metrics:
-                current_metrics[metric_name] /=  sum([len(train_data_loader) for train_data_loader in self.train_data_loader])
-            elif "validation" in metric_name and self.normalize_metrics:
-                current_metrics[metric_name] /=  sum([len(val_data_loader) for val_data_loader in self.val_data_loader])
-            self.history[metric_name].append(
-                current_metrics[metric_name]
-            )
-        return current_metrics
+        ) -> Any:
+        raise NotImplementedError
     
                 
     def fit(

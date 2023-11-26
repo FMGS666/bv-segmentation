@@ -81,7 +81,6 @@ The `model_selection` folder contains the following two files:
 
 The `training` folder contains the following file:
 
-* 1) `training.py`
+* 1) `training_base.py`
 
-This file contains the definition of the `BVSegTraining`, an object for running the training sessions.
-For a better description of its functionalities and its use, check the module's documentation.
+This file contains the definition of the `BVSegTraining`, an object for running the training sessions. This is a base class for the different trainer objects. Provides the methods `training_pass`, `validation_pass`, `epoch` and `fit` that should be overridden by its children classes, as they could be model specific.

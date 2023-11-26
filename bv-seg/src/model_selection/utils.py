@@ -35,7 +35,7 @@ Example of use:
 
 from typing import Iterable, Callable, Generator, Any
 
-from ..file_utils.tif_iterable_folder import Tif3DVolumeIterableFolder
+from ..file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
 
 def retrieve_filenames_from_split_indexes(
         dataset_folder: Tif3DVolumeIterableFolder,
@@ -77,16 +77,24 @@ def retrieve_filenames_from_split_indexes(
             slice_masks_paths[validation_index]
             for validation_index in validation_indexes 
         ]
-        train_paths = {
-            "images": train_images_paths, 
-            "masks": train_masks_paths
-        }
-        validation_paths = {
-            "images": validation_images_paths, 
-            "masks": validation_masks_paths
-        }
+        train_paths = list(zip(train_images_paths, train_masks_paths))
+        validation_paths = list(zip(validation_images_paths, validation_masks_paths))
+        train_paths_list = []
+        validation_paths_list = []
+        for idx, (train_image_path, train_mask_path)  in enumerate(train_paths):
+            data_dictionary = {
+                "image": train_image_path,
+                "label": train_mask_path
+            }
+            train_paths_list.append(data_dictionary)
+        for idx, (validation_image_path, validation_mask_path)  in enumerate(validation_paths):
+            data_dictionary = {
+                "image": validation_image_path,
+                "label": validation_mask_path
+            }
+            validation_paths_list.append(data_dictionary)
         splits_dictionary[fold_id] = {
-            "train": train_paths, 
-            "validation": validation_paths
+            "training": train_paths_list, 
+            "validation": validation_paths_list
         }
     return splits_dictionary
