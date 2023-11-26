@@ -108,3 +108,8 @@ This will be our TODO list, please add your TODOs at the bottom of this page and
 - [] 2) Write `__main__.py` file for running the module
 - [] 3)  Check better the `bv-seg/training/training.py` file for bugs and write its documentation 
 - [] 4) add wandb logging
+
+- [] 5) update `README.md` for the dependency on `monai`, and show the command to download the pretrained weights (`wget -O models/pretrained/model_swinvit.pt https://github.com/Project-MONAI/MONAI-extra-test-data/releases/download/0.8.1/model_swinvit.pt
+`)
+
+- [] 6) Add command to update `env.yml` in the `README.md` (`conda env export --no-builds | grep -v "prefix" > env.yml`)
