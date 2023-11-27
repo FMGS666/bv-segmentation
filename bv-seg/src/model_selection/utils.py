@@ -34,6 +34,7 @@ Example of use:
 """
 
 from typing import Iterable, Callable, Generator, Any
+from pathlib import Path
 
 from ..file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
 
@@ -98,3 +99,15 @@ def retrieve_filenames_from_split_indexes(
             "validation": validation_paths_list
         }
     return splits_dictionary
+
+def retrieve_k_fold_groups(
+        splits_dictionary
+    ) -> dict[int, list[str | Path]]:
+    """
+    
+    """
+    dataset_dict = dict()
+    for split_id, split_paths in splits_dictionary.items():
+        group_paths = split_paths["validation"]
+        dataset_dict[split_id] = group_paths
+    return dataset_dict

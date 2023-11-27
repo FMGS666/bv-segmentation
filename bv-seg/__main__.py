@@ -2,23 +2,10 @@ f"""
 
 """
 import os
+import gc
 import torch
 
-from monai.transforms import (
-    AsDiscrete,
-    Compose,
-    CropForegroundd,
-    LoadImaged,
-    Orientationd,
-    RandFlipd,
-    RandCropByPosNegLabeld,
-    RandShiftIntensityd,
-    ScaleIntensityRanged,
-    Spacingd,
-    RandRotate90d,
-    EnsureTyped,
-)
-
+from monai.transforms import AsDiscrete
 from monai.losses import DiceCELoss
 from monai.networks.nets import SwinUNETR
 from monai.data import WSIReader
@@ -31,14 +18,14 @@ from torch.optim.lr_scheduler import StepLR, ExponentialLR, PolynomialLR
 from .src.file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
 from .src.file_loaders.tif_file_loader import TifFileLoader
 from .src.file_loaders.monai_image_reader import MonAiImageReader
-from .src.file_loaders.utils import construct_volume_tensor
-from .src.utils.get_datasets_from_data_path import get_datasets_from_data_path
 from .src.model_selection.k_fold_split import k_fold_split_iterable_folder
-from .src.model_selection.utils import retrieve_filenames_from_split_indexes
+from .src.model_selection.utils import retrieve_filenames_from_split_indexes, retrieve_k_fold_groups
 from .src.utils.argument_parser import BVSegArgumentParser
-from .src.utils.dump_dataset_metadata import dump_dataset_metadata
 from .src.data_utils.monai_data_loaders import create_data_loaders_from_splits_metadata
+from .src.data_utils.utils import get_volumes_fold_splits, get_datasets_from_data_path, dump_dataset_metadata
 from .src.training.training_swin_unetr import BVSegSwinUnetRTraining
+from .src.volumes.write_volumes import write_volumes_to_tif
+from .src.feature_engineering.monai_transformations import train_transforms, val_transforms, test_transforms
 
 device = "cuda" if cuda.is_available() else "cpu"
 
@@ -55,102 +42,6 @@ schedulers = {
     "PolynomialLR": PolynomialLR,
     None: None
 }
-
-# define other transformations here, these were taken from
-# the colab notebook by `monai` (link: https://colab.research.google.com/drive/1IqdpUPM_CoKYj6EHNb-IYaCiHvEiM08D#scrollTo=1zUgH23MFiMX) 
-train_transforms = Compose(
-    [
-        LoadImaged(keys=["image", "label"], reader=MonAiImageReader, ensure_channel_first = True),
-        ScaleIntensityRanged(
-            keys=["image"],
-            a_min=0,
-            a_max=2**16,
-            b_min=0.0,
-            b_max=1.0,
-            clip=True,
-        ),
-        ScaleIntensityRanged(
-            keys=["label"],
-            a_min=0,
-            a_max=255,
-            b_min=0.0,
-            b_max=1.0,
-            clip=True,
-        ),
-        CropForegroundd(keys=["image", "label"], source_key="image"),
-        Orientationd(keys=["image", "label"], axcodes="RA"),
-        Spacingd(
-            keys=["image", "label"],
-            pixdim=5,
-            mode=("bilinear", "nearest"),
-        ),
-        EnsureTyped(keys=["image", "label"], device=device, track_meta=False),
-        RandCropByPosNegLabeld(
-            keys=["image", "label"],
-            label_key="label",
-            spatial_size=(96, 96),
-            pos=1,
-            neg=1,
-            num_samples=1,
-            image_key="image",
-            image_threshold=0,
-        ),
-        RandFlipd(
-            keys=["image", "label"],
-            spatial_axis=[0],
-            prob=0.10,
-        ),
-        RandFlipd(
-            keys=["image", "label"],
-            spatial_axis=[1],
-            prob=0.10,
-        ),
-        RandRotate90d(
-            keys=["image", "label"],
-            prob=0.10,
-            max_k=3,
-        ),
-        RandShiftIntensityd(
-            keys=["image"],
-            offsets=0.10,
-            prob=0.50,
-        ),
-    ]
-)
-
-val_transforms = Compose(
-    [
-        LoadImaged(keys=["image", "label"], reader=MonAiImageReader, ensure_channel_first = True),
-        ScaleIntensityRanged(
-            keys=["image"], a_min=0, a_max=2**16, b_min=0.0, b_max=1.0, clip=True
-        ),
-        CropForegroundd(keys=["image", "label"], source_key="image"),
-        Orientationd(keys=["image", "label"], axcodes="RA"),
-        Spacingd(
-            keys=["image", "label"],
-            pixdim=5,
-            mode=("bilinear", "nearest"),
-        ),
-        EnsureTyped(keys=["image", "label"], device=device, track_meta=True),
-    ]
-)
-
-test_transforms = Compose(
-    [
-        LoadImaged(keys=["image"], reader=MonAiImageReader, ensure_channel_first = True), #channel_dim=None),
-        ScaleIntensityRanged(
-            keys=["image"], a_min=0, a_max=2**16, b_min=0.0, b_max=1.0, clip=True
-        ),
-        CropForegroundd(keys=["image"], source_key="image"),
-        Orientationd(keys=["image"], axcodes="RA"),
-        Spacingd(
-            keys=["image"],
-            pixdim=5,
-            mode=("bilinear"),
-        ),
-        EnsureTyped(keys=["image"], device=device, track_meta=True),
-    ]
-)
 
 if __name__ == "__main__":
     # defining arguments parser
@@ -178,8 +69,13 @@ if __name__ == "__main__":
     log_path = args.log_path
     relative_improvement = args.relative_improvement
     alpha = args.alpha
-    stacked = args.stacked
     splits_metadata_path = args.splits_metadata_path
+    context_length = args.context_length
+    n_samples = args.n_samples
+    write_volumes = args.write_volumes
+    volumes_path = args.volumes_path
+    dump_metadata = args.dump_metadata
+    train = args.train
 
     # validating the arguments
     if optimizer_id not in optimizers.keys():
@@ -226,65 +122,93 @@ if __name__ == "__main__":
             dataset_splits
         ) for dataset_name, dataset_splits in train_splits_generators.items()
     }
-    # dumping dataset metadata
-    if len(os.listdir(splits_metadata_path)) == 0:
-        for dataset_name, dataset_splits in train_datasets_splits_paths.items():
-            dataset_metadata_path = os.path.join(
-                splits_metadata_path, 
-                dataset_name
-            )
-            os.mkdir(dataset_metadata_path)
-            for split_id, splits in dataset_splits.items():
-                training_paths = splits["training"]
-                validation_paths = splits["validation"]
+    # retrieving the individual groups
+    train_splits_groups = {
+        dataset_name: retrieve_k_fold_groups(dataset_splits)
+        for dataset_name, dataset_splits in train_datasets_splits_paths.items()
+    }
+
+    if write_volumes:
+        write_volumes_to_tif(
+            train_splits_groups,
+            context_length,
+            n_samples
+        )
+    
+    # Now we should construct the dataloader from the sampled volumes
+    train_volumes = {
+        dataset_name: os.path.join(volumes_path, dataset_name)
+        for dataset_name in train_splits_groups.keys()
+    }
+    train_splits_volumes = {
+        dataset_name: get_volumes_fold_splits(train_volumes_directory)
+        for dataset_name, train_volumes_directory in train_volumes.items()
+    }
+
+    # Now we need to dump the volumes metadata
+    if dump_metadata:
+        for dataset_name, splits in train_splits_volumes.items():
+            for split_id, split_dictionary in splits.items():
+                training_paths = split_dictionary["training"]
+                validation_paths = split_dictionary["validation"]
+                metadata_dir = os.path.join(
+                    splits_metadata_path,
+                    dataset_name
+                )
+                if not os.path.exists(metadata_dir):
+                    os.mkdir(metadata_dir)
                 dump_dataset_metadata(
-                    dataset_metadata_path, 
-                    split_id, 
+                    metadata_dir,
+                    split_id,
                     training_paths, 
                     validation_paths
                 )
-    torch.backends.cudnn.benchmark = True
-    # train a model for each split
-    for split_to_train in range(K):
-        model = SwinUNETR(
-            img_size=(96, 96),
-            in_channels=1,
-            out_channels=1,
-            feature_size=48,
-            use_checkpoint=True,
-        ).to(device)
-        weight = torch.load("models/pretrained/model_swinvit.pt")
-        model.load_from(weights=weight)
-        splits_data_loaders = create_data_loaders_from_splits_metadata(
-            splits_metadata_path,
-            train_transforms,
-            val_transforms,
-            train_batch_size = train_batch_size,
-            validation_batch_size = validation_batch_size
-        )
-        loss_function = DiceCELoss(to_onehot_y=True, softmax=True)
-        for (dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
-            if split_id == split_to_train:
-                trainer = BVSegSwinUnetRTraining(
-                    model,
-                    train_data_loader,
-                    validation_data_loader,
-                    optimizer,
-                    loss_function,
-                    initial_learning_rate = initial_learning_rate,
-                    scheduler = scheduler,
-                    epochs = epochs,
-                    patience = patience,
-                    sched_step_after_train = sched_step_after_train,
-                    model_name = model_name,
-                    dump_dir = dump_path,
-                    log_dir = log_path,
-                    optimizer_kwargs = None,
-                    scheduler_kwargs = None 
-                )
-                trainer.prepare()
-                trainer.fit()
-
-    
-
-
+    if train:
+        # creating the data loader
+        torch.backends.cudnn.benchmark = True
+        # train a model for each split
+        for split_to_train in range(K):
+            model = SwinUNETR(
+                img_size=(96, 96, 96),
+                in_channels=1,
+                out_channels=1,
+                feature_size=48,
+                use_checkpoint=True,
+            ).to(device)
+            weight = torch.load("models/pretrained/model_swinvit.pt")
+            model.load_from(weights=weight)
+            model.to(device)
+            optimizer = AdamW(
+                model.parameters(),
+                lr = 1e-4, 
+                weight_decay=1e-5
+            )
+            splits_data_loaders = create_data_loaders_from_splits_metadata(
+                splits_metadata_path,
+                train_transforms,
+                val_transforms,
+                train_batch_size = train_batch_size,
+                validation_batch_size = validation_batch_size
+            )
+            loss_function = DiceCELoss()
+            for (dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
+                if split_id == split_to_train:
+                    trainer = BVSegSwinUnetRTraining(
+                        model,
+                        train_data_loader,
+                        validation_data_loader,
+                        optimizer,
+                        loss_function,
+                        initial_learning_rate = initial_learning_rate,
+                        scheduler = scheduler,
+                        epochs = epochs,
+                        patience = patience,
+                        sched_step_after_train = sched_step_after_train,
+                        model_name = model_name,
+                        dump_dir = dump_path,
+                        log_dir = log_path,
+                        optimizer_kwargs = None,
+                        scheduler_kwargs = None 
+                    )
+                    trainer.prepare()
+                    trainer.fit()

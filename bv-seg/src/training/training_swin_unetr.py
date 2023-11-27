@@ -3,16 +3,19 @@ f"""
 """
 import torch
 import wandb
+import os
+import re
+import json
+import gc
 
 from time import time
 from pathlib import Path
 from typing import Iterable, Callable, Any
-from torch import nn, Tensor
+from torch import nn, Tensor, cuda
 from torch.optim.lr_scheduler import LRScheduler 
 from torch.optim import Optimizer
 from pytorch_memlab import profile
 from tqdm import tqdm
-
 
 from monai.data import decollate_batch
 from monai.inferers import sliding_window_inference
@@ -98,6 +101,9 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         self.scaler.step(self.optimizer)
         self.scaler.update()
         self.optimizer.zero_grad()
+        del logit_map, loss
+        gc.collect()
+        cuda.empty_cache()
         return loss_value
     
     @profile
@@ -107,7 +113,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         ) -> None:
         val_inputs, val_labels = (batch["image"].cuda(), batch["label"].cuda())
         with torch.cuda.amp.autocast():
-            val_outputs = sliding_window_inference(val_inputs, self.model.img_size, 4, self.model)
+            val_outputs = sliding_window_inference(val_inputs, (64, 64, 64), 4, self.model)
         val_labels_list = decollate_batch(val_labels)
         val_labels_convert = [
             self.post_label(val_label_tensor) for val_label_tensor in val_labels_list
@@ -116,9 +122,13 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         val_output_convert = [
             self.post_pred(val_pred_tensor) for val_pred_tensor in val_outputs_list
         ]
+        del val_labels_list, val_labels_convert,\
+            val_outputs_list, val_output_convert, batch
+        gc.collect()
+        cuda.empty_cache()
+
         self.dice_metric(y_pred=val_output_convert, y=val_labels_convert)
     
-
     def epoch(
             self,
             epoch: int
@@ -140,13 +150,19 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             train_loss = self.training_pass(batch)
             epoch_iterator.set_description(
                 "Training (%d / %d Steps) (loss=%2.5f)"
-                % (idx + 1, len(self.train_loader), train_loss)
+                % (idx + 1, len(self.train_data_loader), train_loss)
             )
+            del batch
+            gc.collect()
+            cuda.empty_cache()
             current_metrics["train_loss"] += train_loss
         self.model.eval()
         with torch.no_grad():
             for idx, batch in enumerate(epoch_iterator_val):
                 self.validation_pass(batch)
+                del batch
+                gc.collect()
+                cuda.empty_cache()
             mean_dice_val = self.dice_metric.aggregate().item()
             self.dice_metric.reset()
             current_metrics["val_loss"] += mean_dice_val
@@ -160,7 +176,6 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             print(f"epoch: {epoch + 1}/{self.epochs}")
             self.epoch(epoch)
             self.dump_logs(epoch)
-            self.plot_history(epoch)
             if self.track_validation_progress():
                 print("Validation loss decreasing, saving the model")
                 self.n_saved_models += 1
@@ -174,4 +189,3 @@ class BVSegSwinUnetRTraining(BVSegTraining):
                     print(f"patience reached, quitting the training")
                     break
         return min(self.history["validation_loss"])
-

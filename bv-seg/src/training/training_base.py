@@ -3,6 +3,10 @@ f"""
 """
 
 import wandb
+import torch
+import os
+import re
+import json
 
 from pathlib import Path
 from typing import Iterable, Callable, Any
@@ -63,7 +67,7 @@ class BVSegTraining(object):
         self.split_size = split_size
         self.tollerance = tollerance
         self.amp = amp
-        self.grad_scaler = torch.cuda.amp.GradScaler(enabled=self.amp)
+        self.scaler = torch.cuda.amp.GradScaler(enabled=self.amp)
         self.gradient_clipping = gradient_clipping
         self.history = {
             "train_loss": [9e20],
@@ -72,8 +76,8 @@ class BVSegTraining(object):
         self.n_epochs_with_no_progress = 0
         self.n_saved_models = 0
         self.log_dir = log_dir
-        self.dump_dir = os.path.join(self.dump_dir, self.session_id())
-        self.log_dir = os.path.join(self.log_dir, self.session_id())
+        self.dump_dir = os.path.join(self.dump_dir, self.session_id)
+        self.log_dir = os.path.join(self.log_dir, self.session_id)
         try:
             os.mkdir(self.dump_dir)
             os.mkdir(self.log_dir)
@@ -104,11 +108,6 @@ class BVSegTraining(object):
     def prepare(
             self
         ) -> None: 
-        self.model.to(self.device)
-        self.optimizer = self.optimizer(
-            self.model.parameters(),
-            **self.optimizer_kwargs
-        )
         if self.scheduler:
             self.scheduler = self.scheduler(
                 self.optimizer,

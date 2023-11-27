@@ -1,3 +1,84 @@
+f"""
+
+file: {__file__}
+
+Contents: 
+    *  BVSegArgumentParser
+
+Argument parser for our `bv-seg` module
+
+
+The available options are the following:
+  -h, --help            show this help message and exit
+
+  -trdp TRAIN_DATA_PATH, --train-data-path TRAIN_DATA_PATH
+                        Path to the raw train data
+
+  -tsdp TEST_DATA_PATH, --test-data-path TEST_DATA_PATH
+                        Path to the raw train data
+
+  -k K, --K K           K for the K-Fold Cross Validation
+
+  -r RANDOM_STATE, --random-state RANDOM_STATE
+                        Random state for the K-Fold Cross Validation
+
+  -S, --shuffle         Whether to shuffle observations or not for the K-Fold Cross Validation
+
+  -tbs TRAIN_BATCH_SIZE, --train-batch-size TRAIN_BATCH_SIZE
+                        The batch size for the training data loaders
+
+  -vbs VALIDATION_BATCH_SIZE, --validation-batch-size VALIDATION_BATCH_SIZE
+                        The batch size for the validation data loaders
+
+  -o OPTIMIZER_ID, --optimizer-id OPTIMIZER_ID
+                        The id of the optimizer to be used
+
+  -s SCHEDULER_ID, --scheduler-id SCHEDULER_ID
+                        The id of the scheduler to be used
+
+  -e EPOCHS, --epochs EPOCHS
+                        The number of epochs which to train the model over
+
+  -p PATIENCE, --patience PATIENCE
+                        The patience for early stopping
+
+  -lr INITIAL_LEARNING_RATE, --initial-learning-rate INITIAL_LEARNING_RATE
+                        The learning rate which to start the tuning with
+
+  -g GAMMA, --gamma GAMMA
+                        The gamma for the ExponentialLR scheduler
+
+  -a ALPHA, --alpha ALPHA
+                        The alpha for the RMSProp optimize
+
+  -P POWER, --power POWER
+                        The power for the PolynomialLR scheduler
+
+  -st, --sched-step-after-train
+                        Whether to shuffle observations or not for the K-Fold Cross Validation
+                        
+  -ri, --relative-improvement
+                        Whether to use relative improvement as stopping criterion
+
+  -n MODEL_NAME, --model-name MODEL_NAME
+                        The name for the model
+
+  -dp DUMP_PATH, --dump-path DUMP_PATH
+                        The path where to save the models
+
+  -lp LOG_PATH, --log-path LOG_PATH
+                        The path where to save logs during training
+
+  -smp SPLITS_METADATA_PATH, --splits-metadata-path SPLITS_METADATA_PATH
+                        The path where to save splits metadata
+
+  -c CONTEXT_LENGTH, --context-length CONTEXT_LENGTH
+                        The context length for sampling 3D volumes
+
+  -ns N_SAMPLES, --n-samples N_SAMPLES
+                        The number of 3D volumes to sample for each split
+
+"""
 import argparse
 
 class BVSegArgumentParser(argparse.ArgumentParser):
@@ -137,12 +218,6 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             action = "store_true"
         )
         self.add_argument(
-            '-stk', 
-            '--stacked',
-            help = "Whether to shuffle observations or not for the K-Fold Cross Validation",
-            action = "store_true"
-        )
-        self.add_argument(
             '-ri', 
             '--relative-improvement',
             help = "Whether to use relative improvement as stopping criterion",
@@ -178,6 +253,48 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             type = str,
             help = "The path where to save splits metadata",
             required = False,
-            default = "./bv-seg/splits_metadata"
+            default = "./data/splits_metadata"
+        ) 
+        self.add_argument(
+            '-c', 
+            '--context-length',
+            type = int,
+            help = "The context length for sampling 3D volumes",
+            required = False,
+            default = 50
+        ) 
+        self.add_argument(
+            '-ns', 
+            '--n-samples',
+            type = int,
+            help = "The number of 3D volumes to sample for each split",
+            required = False,
+            default = 1
+        ) 
+        self.add_argument(
+            '-wv', 
+            '--write-volumes',
+            help = "Whether to write to disk new 3D volumes sampled from each split",
+            action = "store_true",
+        ) 
+        self.add_argument(
+            '-vp', 
+            '--volumes-path',
+            help = "The path to the 3D volumes Tif files",
+            type = str,
+            required = False,
+            default = "./data/splits_sampled_volumes"
+        ) 
+        self.add_argument(
+            '-dm', 
+            '--dump-metadata',
+            help = "Whether to dump volumes metadata",
+            action = "store_true"
+        ) 
+        self.add_argument(
+            '-t', 
+            '--train',
+            help = "Whether to perform training",
+            action = "store_true"
         ) 
         

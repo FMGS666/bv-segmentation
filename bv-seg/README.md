@@ -18,7 +18,10 @@ It is structured in the following subfolders:
 * `visualization`: containing the file with the definition of functions for visualizing the images in different ways.
 * `feature_engineering`: containing the file with the definition of the object used for performing feature engineering (i.e.: image preprocessing) on the provided images. The package used for performing such transformations is `albumentations`.
 * `model_selection`: containing the filed with the definition of the functions for performing validation split on the data. This module heavily relies on the `sklearn.model_selection` from `scikit-learn`. The main idea for performing validation split on the data is to do `KFold` cross validation.
-* `data`: containing the definition of the file for creating the `torch.Dataset` for the data.
+* `data_utils`: containing the definition of the file for handling the data.
+* `utils`: containing the definition of the file for creating the `ArgumentParser` for the module.
+* `training`: containing the definition of the files for training the models.
+* `volumes`: containing the definition of the files for reconstructing 3D volumes from a sequence of scans.
 
 ---
 
