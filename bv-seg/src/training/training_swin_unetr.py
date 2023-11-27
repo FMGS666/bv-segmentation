@@ -113,7 +113,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         ) -> None:
         val_inputs, val_labels = (batch["image"].cuda(), batch["label"].cuda())
         with torch.cuda.amp.autocast():
-            val_outputs = sliding_window_inference(val_inputs, (64, 64, 64), 4, self.model)
+            val_outputs = sliding_window_inference(val_inputs, tuple([self.split_size]*3), 1, self.model)
         val_labels_list = decollate_batch(val_labels)
         val_labels_convert = [
             self.post_label(val_label_tensor) for val_label_tensor in val_labels_list

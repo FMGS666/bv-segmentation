@@ -169,7 +169,7 @@ if __name__ == "__main__":
         # train a model for each split
         for split_to_train in range(K):
             model = SwinUNETR(
-                img_size=(96, 96, 96),
+                img_size=(64, 64, 64),
                 in_channels=1,
                 out_channels=1,
                 feature_size=48,
@@ -208,7 +208,8 @@ if __name__ == "__main__":
                         dump_dir = dump_path,
                         log_dir = log_path,
                         optimizer_kwargs = None,
-                        scheduler_kwargs = None 
+                        scheduler_kwargs = None,
+                        split_size = 64 
                     )
                     trainer.prepare()
                     trainer.fit()
