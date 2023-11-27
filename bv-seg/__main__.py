@@ -23,7 +23,7 @@ from .src.data_utils.monai_data_loaders import create_data_loaders_from_splits_m
 from .src.data_utils.utils import get_volumes_fold_splits, get_datasets_from_data_path, dump_dataset_metadata
 from .src.training.training_swin_unetr import BVSegSwinUnetRTraining
 from .src.volumes.write_volumes import write_volumes_to_tif
-from .src.feature_engineering.monai_transformations import train_transforms, val_transforms, test_transforms
+from .src.feature_engineering.monai_transformations import get_monai_transformations
 
 device = "cuda" if cuda.is_available() else "cpu"
 
@@ -74,6 +74,7 @@ if __name__ == "__main__":
     volumes_path = args.volumes_path
     dump_metadata = args.dump_metadata
     train = args.train
+    patch_size = args.patch_size
 
     # validating the arguments
     if optimizer_id not in optimizers.keys():
@@ -164,10 +165,17 @@ if __name__ == "__main__":
     if train:
         # creating the data loader
         torch.backends.cudnn.benchmark = True
+        train_transforms, val_transforms, test_transforms = get_monai_transformations(
+            patch_size
+        )
         # train a model for each split
         for split_to_train in range(K):
             model = SwinUNETR(
-                img_size=(64, 64, 64),
+                img_size=(
+                    patch_size, 
+                    patch_size, 
+                    patch_size
+                ),
                 in_channels=1,
                 out_channels=1,
                 feature_size=48,
@@ -207,7 +215,7 @@ if __name__ == "__main__":
                         log_dir = log_path,
                         optimizer_kwargs = None,
                         scheduler_kwargs = None,
-                        split_size = 64 
+                        split_size = patch_size 
                     )
                     #trainer.prepare()
                     trainer.fit()

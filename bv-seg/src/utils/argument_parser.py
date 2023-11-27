@@ -306,4 +306,12 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             help = "Whether to perform training",
             action = "store_true"
         ) 
+        self.add_argument(
+            '-ps', 
+            '--patch-size',
+            type = int,
+            help = "The size of the patches",
+            required = False,
+            default = 64
+        ) 
         
