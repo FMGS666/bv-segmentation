@@ -1,6 +1,16 @@
 f"""
 
+file: {__file__}
+
+Contents:
+    * `BVSegSwinUnetRTraining`
+
+This is the base class for training the Swin UnetR model. 
+It implements the model-specific methods (namely: `training_pass`, 
+`validation_pass` and `epoch`).
+
 """
+
 import torch
 import wandb
 import os
@@ -53,6 +63,47 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             scale_grad: bool = True,
             verbose: bool = True  
         ) -> None:
+        """
+        Arguments: 
+            * `self`
+            * `model: nn.Module` -> the module to be trained
+            * `train_data_loader: Iterable` -> the training data loader
+            * `val_data_loader: Iterable` -> the validation data loader
+            * `optimizer: Optimizer` -> the optimizer used for training
+            * `loss: nn.Module` -> the loss used for back-propagating the gradients
+            * `initial_learning_rate: float | None` -> the initial learning rate
+            * `scheduler: LRScheduler | None` -> the scheduler for adapting the step size
+            * `epochs: int` -> the maximum number of epochs which to train the model over
+            * `patience: int` -> the maximum number of epochs without improvement 
+                in the validation loss to wait before doing early stopping
+            * `sched_step_after_train: bool` -> whether to perform the scheduler step after 
+                training
+            * `model_name: str` -> the name of the model
+            * `dump_dir: str | Path` -> the directory where to save the 
+                trained models' state dictionaries
+            * `log_dir: str | Path` -> the directory where to save 
+                the logs of the training session
+            * `optimizer_kwargs: dict | None` -> additional key-word arguments 
+                to be passed to the optimizer
+            * `scheduler_kwargs: dict | None` -> additional key-word arguments 
+                to be passed to the scheduler
+            * `plot_style: str` -> the style for the plots
+            * `split_size: int` -> the size of the patches in which the images are split
+                (i.e.: the input size for the model)
+            * `tollerance: float` -> the tollerance used when considering 
+                validation loss improvements (i.e.: the smaller, the stricter the early
+                stopping criterion)
+            * `amp: bool` -> whether to use automatic mixed precision when scaling the gradient or not
+            * `gradient_clipping: float | None` -> the value at which to clip gradient norms
+            * `relative_improvement: bool` -> whether to consider relative improvement as stopping criterion
+            * `scale_grad: bool` -> whether to perform gradient scaling after the 
+                training pass and before backpropagation
+            * `verbose: bool` -> the verbosity of the training 
+        
+        Returns: 
+            * `None`
+            
+        """
         super(BVSegSwinUnetRTraining, self).__init__(
             model,
             train_data_loader,
@@ -91,6 +142,16 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             self,
             batch: dict
         ) -> float:
+        """
+        Arguments: 
+            * `self`
+            * `batch: dict[str, Tensor]` -> batch which to perform the training pass over
+        
+        Returns: 
+            * `float` -> the training loss
+        
+        Performs a forward and a backward pass on a training batch and returns the obtained training loss.
+        """
         x, y = (batch["image"].cuda(), batch["label"].cuda())
         with torch.cuda.amp.autocast():
             logit_map = self.model(x)
@@ -111,7 +172,18 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             self,
             batch: dict
         ) -> None:
-        val_inputs, val_labels = (batch["image"].cuda(), batch["label"].cuda())
+        """
+        Arguments: 
+            * `self`
+            * `batch: dict[str, Tensor]` -> batch which to perform the validation pass over
+        
+        Returns: 
+            * `None` -> this function only updates the `self.dice_metric` atribute
+                and does not return any object
+        
+        Performs a forward on a validation batch and returns the obtained validation loss.
+        """
+        val_inputs, val_labels = (batch["image"], batch["label"])
         with torch.cuda.amp.autocast():
             val_outputs = sliding_window_inference(val_inputs, tuple([self.split_size]*3), 1, self.model)
         val_labels_list = decollate_batch(val_labels)
@@ -133,6 +205,17 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             self,
             epoch: int
         ) -> Any:
+        """
+        Arguments: 
+            * `self`
+            * `epoch: int` -> the id of the current epoch
+        
+        Returns: 
+            * `Any` -> the results of the epoch (i.e.: training and validation losses)
+        
+        Iterates over the batches of `self.train_data_loader` and `self.val_data_loader`
+        and performs a full epoch over them by calling `self.training_pass` and `self.validation_pass`
+        """
         current_metrics = {
             metric_name: 0.0 for metric_name in self.history.keys()
         }
@@ -169,23 +252,3 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         for key, value in current_metrics.items():
             self.history[key].append(value)
     
-    def fit(
-            self
-        ) -> float:
-        for epoch in range(self.epochs):
-            print(f"epoch: {epoch + 1}/{self.epochs}")
-            self.epoch(epoch)
-            self.dump_logs(epoch)
-            if self.track_validation_progress():
-                print("Validation loss decreasing, saving the model")
-                self.n_saved_models += 1
-                self.n_epochs_with_no_progress = 0
-                self.dump_model()
-                self.make_predictions()
-            else:
-                self.n_epochs_with_no_progress += 1
-                print(f"Validation loss not improving over the last {self.n_epochs_with_no_progress}")
-                if self.n_epochs_with_no_progress > self.patience:
-                    print(f"patience reached, quitting the training")
-                    break
-        return min(self.history["validation_loss"])

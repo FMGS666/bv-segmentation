@@ -56,7 +56,7 @@ The available options are the following:
 
   -st, --sched-step-after-train
                         Whether to shuffle observations or not for the K-Fold Cross Validation
-                        
+
   -ri, --relative-improvement
                         Whether to use relative improvement as stopping criterion
 
@@ -77,6 +77,15 @@ The available options are the following:
 
   -ns N_SAMPLES, --n-samples N_SAMPLES
                         The number of 3D volumes to sample for each split
+                        
+  -wv, --write-volumes  Whether to write to disk new 3D volumes sampled from each split
+
+  -vp VOLUMES_PATH, --volumes-path VOLUMES_PATH
+                        The path to the 3D volumes Tif files
+
+  -dm, --dump-metadata  Whether to dump volumes metadata
+
+  -t, --train           Whether to perform training
 
 """
 import argparse

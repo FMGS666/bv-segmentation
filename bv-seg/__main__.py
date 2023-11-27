@@ -16,8 +16,6 @@ from torch.optim import Adam, AdamW, SGD, RMSprop
 from torch.optim.lr_scheduler import StepLR, ExponentialLR, PolynomialLR
 
 from .src.file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
-from .src.file_loaders.tif_file_loader import TifFileLoader
-from .src.file_loaders.monai_image_reader import MonAiImageReader
 from .src.model_selection.k_fold_split import k_fold_split_iterable_folder
 from .src.model_selection.utils import retrieve_filenames_from_split_indexes, retrieve_k_fold_groups
 from .src.utils.argument_parser import BVSegArgumentParser
@@ -211,5 +209,5 @@ if __name__ == "__main__":
                         scheduler_kwargs = None,
                         split_size = 64 
                     )
-                    trainer.prepare()
+                    #trainer.prepare()
                     trainer.fit()

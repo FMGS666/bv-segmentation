@@ -5,10 +5,17 @@ file: {__file__}
 Contents:
 
 * `retrieve_filenames_from_split_indexes`
+* `retrieve_k_fold_groups`
 
-Function that can be used to perform the k-fold split on a `Tif3DVolumeIterableFolder`.
-It will retrieve the file names from a generator containing the indeces of 
-the `training` and `validation` elements of each split.
+Functions that can be used to perform the k-fold split on a `Tif3DVolumeIterableFolder`.
+`retrieve_filenames_from_split_indexes` will retrieve the file names from a generator 
+containing the indeces of the `training` and `validation` elements of each split.
+`retrieve_k_fold_groups` will retrieve each individual fold, thus just returning the 
+data split in the folds (i.e.: without specifying which fold is to be 
+used as training/validation). 
+This is useful if we want to sample 3D volumes for each split  and we want to be sure 
+there is no overlapping between the volumes used for training and the ones used for validation,
+as this would distor the validation procedure. 
 
 Example of use: 
 
@@ -28,6 +35,9 @@ Example of use:
 >>>     kidney_1_dense_iterable_folder, 
 >>>     kidney_1_dense_splits
 >>> ) # This object will contain the actual paths
+>>> kidney_1_dense_groups = retrieve_k_fold_groups(
+>>>     kidiney_1_dense_splits
+>>> ) # This object will contain the individual groups
 ```
 
 
@@ -41,7 +51,7 @@ from ..file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
 def retrieve_filenames_from_split_indexes(
         dataset_folder: Tif3DVolumeIterableFolder,
         splits_generator: Generator
-    ) -> dict[int, dict[str, list[str]]]:
+    ) -> dict[int, dict[str, list[dict[str, str]]]]:
     """
     
     Arguments:
@@ -53,9 +63,10 @@ def retrieve_filenames_from_split_indexes(
             - `keys()`: `int` -> the id of the split
             - `values()`: `dict` -> the dictionary containing the paths of the split
                 - `keys()`: `str` -> mode of the split (i.e.: "train" or "validation")
-                - `values()`: `dict` -> dictionary containing the paths to the images and masks
+                - `values()`: `list[dict]` -> list of dictionaries containing the paths to the images and masks
                     - `keys()`: `str` -> whether the paths are images or labels (i.e.: "images" or "labels")
-                    - `values()`: `list[str]` -> list containing the path to the `.tif` file
+                    - `values()`: `str` -> the path to the `.tif` file
+                    
 
     """
     splits_dictionary = dict()
@@ -101,10 +112,19 @@ def retrieve_filenames_from_split_indexes(
     return splits_dictionary
 
 def retrieve_k_fold_groups(
-        splits_dictionary
-    ) -> dict[int, list[str | Path]]:
+        splits_dictionary: dict[int, dict[str, list[dict[str, str]]]]
+    ) -> dict[int, list[dict[str, str]]]:
     """
+    Arguments:
+        * `splits_dictionary: dict[int, dict[str, list[dict[str, str]]]]` -> the dictionary containing the paths
+            to the data for each split (i.e.: basically, the output of `retrieve_filenames_from_split_indexes`)
     
+    Returns:
+        * `dict[int, list[dict[str, str]]]` -> the groups for each split
+            - `keys()`: `int` -> the id of the split
+            - `values()`: `list[dict]` -> list of dictionaries containing the paths to the images and masks
+                - `keys()`: `str` -> whether the paths are images or labels (i.e.: "images" or "labels")
+                - `values()`: `str` -> the path to the `.tif` file
     """
     dataset_dict = dict()
     for split_id, split_paths in splits_dictionary.items():
