@@ -32,7 +32,8 @@ def sample_random_window_context_indexes(
 def sample_random_window_context(
         iterable_to_sample: Iterable,
         context_length: int = 50,
-        n_samples: int = 1
+        n_samples: int = 1,
+        subsample: bool = True
     ) -> list[dict[str, np.ndarray]]:
     """
     
@@ -45,7 +46,8 @@ def sample_random_window_context(
     )
     volumes = []
     for (l_slice_id, u_slice_id) in context_window_indexes:
-        context_window_paths = iterable_to_sample[l_slice_id: u_slice_id]
+        context_window_paths = iterable_to_sample[l_slice_id: u_slice_id] if subsample\
+            else iterable_to_sample
         image_volume = []
         mask_volume = []
         for paths in context_window_paths:

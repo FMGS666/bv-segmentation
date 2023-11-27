@@ -9,14 +9,16 @@ from .sample_context_volume import sample_random_window_context, save_context_vo
 def write_volumes_to_tif(
         train_splits_groups: dict,
         context_length: int,
-        n_samples: int
+        n_samples: int,
+        subsample: bool = True
     ) -> None:
     train_splits_sample_volumes = {
         dataset_name: {
             split_id: sample_random_window_context(
                 split,
                 context_length = context_length,
-                n_samples = n_samples
+                n_samples = n_samples,
+                subsample = subsample
             )
             for split_id, split in split_groups.items()
         }

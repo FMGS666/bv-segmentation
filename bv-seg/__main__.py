@@ -75,6 +75,7 @@ if __name__ == "__main__":
     dump_metadata = args.dump_metadata
     train = args.train
     patch_size = args.patch_size
+    subsample = args.full_volumes
 
     # validating the arguments
     if optimizer_id not in optimizers.keys():
@@ -131,7 +132,8 @@ if __name__ == "__main__":
         write_volumes_to_tif(
             train_splits_groups,
             context_length,
-            n_samples
+            n_samples,
+            subsample = subsample
         )
     
     # Now we should construct the dataloader from the sampled volumes

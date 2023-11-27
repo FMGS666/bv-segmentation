@@ -314,4 +314,10 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             required = False,
             default = 64
         ) 
+        self.add_argument(
+            '-fv', 
+            '--full-volumes',
+            help = "Whether to take full slices for creating volumes",
+            action = "store_false"
+        ) 
         
