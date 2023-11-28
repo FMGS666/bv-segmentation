@@ -101,7 +101,7 @@ Note: This commands were not tested, please report if they are not working.
 All the code that in this repository can be used via the `bv-seg` module.
 The source code is placed into the `bv-seg/src` folder, and organized into different subfolders.
 
-For a better description of the structure of the `bv-seg/src` folder, confront the `bv-seg/README.md` file.
+For a better description of the structure of the `bv-seg/src` folder, confront the <a href="bv-seg/README.md">`bv-seg/README.md`</a> file.
 
 The `models` directory is the one where all the trained models' state dictionaries will be dumped. In this way, we will be able to load them later to make inference on the test images.
 
