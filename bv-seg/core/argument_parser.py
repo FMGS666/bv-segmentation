@@ -93,6 +93,7 @@ import argparse
 class BVSegArgumentParser(argparse.ArgumentParser):
     def __init__(
             self,
+            supported_commands: list[str],
             prog: str = "This software can be used for training models for the Blood Vessel Segmentation Kaggle competition",
             description: str = "We'll make a better description later, sorry folks",
             epilog: str = "If you're reading this, it's far too late dawg"
@@ -102,6 +103,21 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             description = description,
             epilog = epilog
         )
+        self.supported_commands = supported_commands
+        self.add_argument(
+            'command',
+            choices = self.supported_commands,
+            help = f"The command to be run. The supported commands are: {self.supported_commands}",
+        )
+        self.add_argument(
+            '-smp', 
+            '--splits-metadata-path',
+            type = str,
+            help = "The path where to save splits metadata",
+            required = False,
+            default = "./data/splits_metadata"
+        )
+
         self.add_argument(
             '-trdp', 
             '--train-data-path',
@@ -141,6 +157,36 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             action = "store_true"
         )
         self.add_argument(
+            '-c', 
+            '--context-length',
+            type = int,
+            help = "The context length for sampling 3D volumes",
+            required = False,
+            default = 50
+        ) 
+        self.add_argument(
+            '-ns', 
+            '--n-samples',
+            type = int,
+            help = "The number of 3D volumes to sample for each split",
+            required = False,
+            default = 1
+        )
+        self.add_argument(
+            '-fv', 
+            '--full-volumes',
+            help = "Whether to take full slices for creating volumes",
+            action = "store_false"
+        ) 
+        self.add_argument(
+            '-vp', 
+            '--volumes-path',
+            help = "The path to the 3D volumes Tif files",
+            type = str,
+            required = False,
+            default = "./data/splits_sampled_volumes"
+        )
+        self.add_argument(
             '-tbs', 
             '--train-batch-size',
             type = int,
@@ -155,22 +201,6 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             help = "The batch size for the validation data loaders",
             required = False,
             default = 1
-        )
-        self.add_argument(
-            '-o', 
-            '--optimizer-id',
-            type = str,
-            help = "The id of the optimizer to be used",
-            required = False,
-            default = "AdamW"
-        )
-        self.add_argument(
-            '-s', 
-            '--scheduler-id',
-            type = str,
-            help = "The id of the scheduler to be used",
-            required = False,
-            default = None
         )
         self.add_argument(
             '-e', 
@@ -197,28 +227,12 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             default = 1e-4
         )
         self.add_argument(
-            '-g', 
-            '--gamma',
+            '-wd', 
+            '--weight-decay',
             type = float,
-            help = "The gamma for the ExponentialLR scheduler",
+            help = "The weight decay for the Adam(W) optimizers",
             required = False,
-            default = 9999e-4
-        )
-        self.add_argument(
-            '-a', 
-            '--alpha',
-            type = float,
-            help = "The alpha for the RMSProp optimize",
-            required = False,
-            default = 9e-1
-        )
-        self.add_argument(
-            '-P', 
-            '--power',
-            type = float,
-            help = "The power for the PolynomialLR scheduler",
-            required = False,
-            default = 2.0
+            default = 1e-5
         )
         self.add_argument(
             '-st', 
@@ -238,7 +252,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             type = str,
             help = "The name for the model",
             required = False,
-            default = "Unet"
+            default = "Swin UnetR"
         ) 
         self.add_argument(
             '-dp', 
@@ -255,57 +269,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             help = "The path where to save logs during training",
             required = False,
             default = "./logs"
-        ) 
-        self.add_argument(
-            '-smp', 
-            '--splits-metadata-path',
-            type = str,
-            help = "The path where to save splits metadata",
-            required = False,
-            default = "./data/splits_metadata"
-        ) 
-        self.add_argument(
-            '-c', 
-            '--context-length',
-            type = int,
-            help = "The context length for sampling 3D volumes",
-            required = False,
-            default = 50
-        ) 
-        self.add_argument(
-            '-ns', 
-            '--n-samples',
-            type = int,
-            help = "The number of 3D volumes to sample for each split",
-            required = False,
-            default = 1
-        ) 
-        self.add_argument(
-            '-wv', 
-            '--write-volumes',
-            help = "Whether to write to disk new 3D volumes sampled from each split",
-            action = "store_true",
-        ) 
-        self.add_argument(
-            '-vp', 
-            '--volumes-path',
-            help = "The path to the 3D volumes Tif files",
-            type = str,
-            required = False,
-            default = "./data/splits_sampled_volumes"
-        ) 
-        self.add_argument(
-            '-dm', 
-            '--dump-metadata',
-            help = "Whether to dump volumes metadata",
-            action = "store_true"
-        ) 
-        self.add_argument(
-            '-t', 
-            '--train',
-            help = "Whether to perform training",
-            action = "store_true"
-        ) 
+        )
         self.add_argument(
             '-ps', 
             '--patch-size',
@@ -313,11 +277,5 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             help = "The size of the patches",
             required = False,
             default = 64
-        ) 
-        self.add_argument(
-            '-fv', 
-            '--full-volumes',
-            help = "Whether to take full slices for creating volumes",
-            action = "store_false"
-        ) 
+        )
         

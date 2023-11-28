@@ -141,7 +141,7 @@ conda env export --no-builds | grep -v "prefix" > env.yml;
 It will (should) be possible to use the `sv-seg` module from the root of the project's repository by running:
 
 ```
-python -m bv-seg [--flags] [args];
+python -m bv-seg [command] [--flags args];
 ```
 
 A comprehensive list of all the possible arguments could be viewed by running:
@@ -204,11 +204,22 @@ We will then randomly take vertical slices to subsample blocks of volumes from a
 Since the data is not provided under this form, we need to process it accordingly. It is possible to create such volume samples by running:
 
 ```
-python3 -m bv-seg --write-volumes --dump-metadata --n-samples 5 --context-length 50
+python3 -m bv-seg sample --n-samples <n_samples> --context-length <contex_length>
 ```
 
 This command will sample 5 volumes of depth `2*context_length + 1` and write them as `nii.gz` files in the `data/splits_sampled_volumes/<dataset-name>/#<split-id>/<type>/` folder, where `<type>` could be either `images` or `masks` and write their metadata to the `data/splits_metadata/<dataset-name>/#<split-id>.json` file.
 The metadata is required to use the `monai` data loaders.
+
+
+### Training the model
+
+Once that we have sample enough volumes and they are saved in the `./data/splits_sampled_volumes` folder, and that the metadata are correctly stored in the `./data/splits_metadata` folder, we can proceed by training the model with its default settings, by running the following command:
+
+```
+python3 -m bv-seg train
+```
+
+There is plenty of additional flags that could be added to the program, please use the module helper flag to get a brief description of each additional argument. 
 
 ---
 

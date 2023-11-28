@@ -288,20 +288,6 @@ class BVSegTraining(object):
             os.path.join(dump_path, "optimizer.pt")
         )
 
-    def prepare(
-            self
-        ) -> None: 
-        """
-        Arguments: 
-            * `self`
-        
-        Returns: 
-            * `None`
-
-        Prepares the training sessions attributes for training.
-        This is an abstract class and should be overridden by the model specific trainers.
-        """
-        raise NotImplementedError
 
     def training_pass(
             self,
