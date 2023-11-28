@@ -150,44 +150,6 @@ A comprehensive list of all the possible arguments could be viewed by running:
 python -m bv-seg -h
 ```
 
-## 6. Using the code on other platforms
-
-In order to use the `bv-seg` module on other platforms, you can download it as a `.zip` file, with the requirements needed for creating the anaconda environment, by running:
-
-```
-wget https://fmgs666.github.io/bv-seg.zip;
-wget https://fmgs666.github.io/env.yml;
-unzip bv-seg.zip;
-conda env create --name envname --file=env.yml;
-```
-
-Whenever changes are made to the `bv-seg` module, you can upload them to the github pages by running the following commands:
-```
-cd ..; # cd to parent directory in order to be outside of this repository's folder
-git clone git@github.com:FMGS666/FMGS666.github.io.git;
-zip -r ./FMGS666.github.io/bv-seg.zip blood-vessel-seg/bv-seg;
-cd FMGS666.github.io;
-git add .;
-git commit -m "Updating bv-seg.zip";
-git push origin main;
-cd ../;
-rm -r -f ./FMGS666.github.io;
-cd blood-vessel-seg;
-```
-On the other hand, commits to the `env.yml` can be pushed to the github page by running, from the repository's root directory:
-```
-conda env export --no-builds | grep -v "prefix" > env.yml;
-cd ../;
-git clone git@github.com:FMGS666/FMGS666.github.io.git;
-cp ./blood-vessel-seg/env.yml ./FMGS666.github.io/env.yml
-git add .;
-git commit -m "Updating env.yml";
-git push origin main;
-cd ../;
-rm -r -f ./FMGS666.github.io;
-cd blood-vessel-seg;
-```
-
 ## 6. The Pipeline
 
 ### Data Split
