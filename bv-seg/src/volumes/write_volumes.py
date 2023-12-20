@@ -10,7 +10,8 @@ def write_volumes_to_tif(
         train_splits_groups: dict,
         context_length: int,
         n_samples: int,
-        subsample: bool = True
+        subsample: bool = True,
+        dump_folder: str = "./data/splits_sampled_volumes"
     ) -> None:
     train_splits_sample_volumes = {
         dataset_name: {
@@ -29,7 +30,8 @@ def write_volumes_to_tif(
             save_context_volumes_to_nii_gz(
                 dataset_name,
                 splt_id,
-                split_volumes
+                split_volumes,
+                dump_folder = dump_folder
             )
             del split_volumes
             gc.collect()

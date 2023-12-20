@@ -162,7 +162,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         self.scaler.step(self.optimizer)
         self.scaler.update()
         self.optimizer.zero_grad()
-        del logit_map, loss
+        del logit_map, loss, x, y
         gc.collect()
         cuda.empty_cache()
         return loss_value

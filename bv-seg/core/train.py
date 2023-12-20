@@ -1,6 +1,7 @@
 import torch
 from torch import cuda
 from torch.optim import AdamW
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from monai.losses import DiceCELoss
 from monai.networks.nets import SwinUNETR
@@ -53,6 +54,10 @@ def train(
             model.parameters(),
             lr = initial_learning_rate, 
             weight_decay = weight_decay
+        )
+        scheduler = CosineAnnealingLR(
+            optimizer, 
+            initial_learning_rate
         )
         splits_data_loaders = create_data_loaders_from_splits_metadata(
             splits_metadata_path,

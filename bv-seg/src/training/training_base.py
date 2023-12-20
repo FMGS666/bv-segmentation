@@ -152,7 +152,7 @@ class BVSegTraining(object):
         Returns:
             * `str` -> the id of the training session encoded as a string
         """
-        string =  f"model-{self.model_name}_optimizer-{self.optimizer.__class__}_scheduler-{self.scheduler.__class__.__name__ if self.scheduler else 'NA'}_{self.dict_as_string(self.optimizer_kwargs)}_{self.dict_as_string(self.scheduler_kwargs) if self.scheduler else 'NA'}"
+        string =  f"model-{self.model_name}_optimizer-{self.optimizer.__class__}_scheduler-{self.scheduler.__class__.__name__ if self.scheduler else 'NA'}_{self.dict_as_string(self.optimizer_kwargs)}_{self.dict_as_string(self.scheduler_kwargs) if self.scheduler_kwargs else 'NA'}"
         string = re.sub('\.', '_',string)
         string = re.sub("[><)(',\s]", '',string)
         return string

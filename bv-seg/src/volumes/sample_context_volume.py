@@ -13,11 +13,19 @@ from ..file_loaders.tif_file_loader import TifFileLoader
 def sample_random_window_context_indexes(
         n_slices: int,
         context_length: int,
-        n_samples: int
+        n_samples: int,
+        subsample: bool
     ) -> list[tuple[int]]:
     """
     
     """
+    if not subsample:
+        return [
+            (
+                0, 
+                n_slices - 1
+            )
+        ]
     context_centers = [idx for idx in range(context_length, n_slices - context_length)]
     sampled_context_centers = np.random.choice(context_centers, n_samples, replace=False)
     context_windows = [
@@ -33,7 +41,8 @@ def sample_random_window_context(
         iterable_to_sample: Iterable,
         context_length: int = 50,
         n_samples: int = 1,
-        subsample: bool = True
+        subsample: bool = True,
+        train: bool = True 
     ) -> list[dict[str, np.ndarray]]:
     """
     
@@ -42,7 +51,8 @@ def sample_random_window_context(
     context_window_indexes = sample_random_window_context_indexes(
         n_slices, 
         context_length,
-        n_samples
+        n_samples,
+        subsample
     )
     volumes = []
     for (l_slice_id, u_slice_id) in context_window_indexes:
@@ -52,23 +62,32 @@ def sample_random_window_context(
         mask_volume = []
         for paths in context_window_paths:
             image_path = paths["image"]
-            mask_path = paths["label"]
             image_file_loader = TifFileLoader(image_path)
-            mask_file_loader = TifFileLoader(mask_path)
             image_array = image_file_loader.image_array
-            mask_array = mask_file_loader.image_array
             image_volume.append(image_array)
-            mask_volume.append(mask_array)
+            if train:
+                mask_path = paths["label"]
+                mask_file_loader = TifFileLoader(mask_path)
+                mask_array = mask_file_loader.image_array
+                mask_volume.append(mask_array)
+
         image_volume = np.stack(image_volume, axis = 0)
-        mask_volume = np.stack(mask_volume, axis = 0)
         assert image_volume.ndim == 3, f"{image_volume.shape=}"
-        assert mask_volume.ndim == 3, f"{mask_volume.shape=}"
-        volumes.append(
-            {
-                "image": image_volume,
-                "label": mask_volume
-            }
-        )
+        if train:
+            mask_volume = np.stack(mask_volume, axis = 0)
+            assert mask_volume.ndim == 3, f"{mask_volume.shape=}"
+            volumes.append(
+                {
+                    "image": image_volume,
+                    "label": mask_volume
+                }
+            )
+        else:
+            volumes.append(
+                {
+                    "image": image_volume,
+                }
+            )
     return volumes
         
 def save_context_volumes_to_nii_gz(
