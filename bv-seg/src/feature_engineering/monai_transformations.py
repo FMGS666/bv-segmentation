@@ -101,6 +101,14 @@ def get_monai_transformations(
             ScaleIntensityRanged(
                 keys=["image"], a_min=0, a_max=2**16, b_min=0.0, b_max=1.0, clip=True
             ),
+            ScaleIntensityRanged(
+                keys=["label"],
+                a_min=0,
+                a_max=255,
+                b_min=0.0,
+                b_max=1.0,
+                clip=True,
+            ),
             CropForegroundd(keys=["image", "label"], source_key="image", allow_smaller = False),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
             Spacingd(
