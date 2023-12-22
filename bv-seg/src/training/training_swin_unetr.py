@@ -133,7 +133,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         self.epoch_iterator = tqdm(
             self.train_data_loader, desc="Training (X / X Steps) (loss=X.X)", dynamic_ncols=True
         )
-        self.post_label = AsDiscrete(to_onehot=1)
+        self.post_label = AsDiscrete(to_onehot=1, dtype=torch.float)
         self.post_pred = AsDiscrete(argmax=True, to_onehot=1)
         self.dice_metric = DiceMetric(include_background=True, reduction="mean", get_not_nans=False)
     
