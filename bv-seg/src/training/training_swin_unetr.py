@@ -194,8 +194,8 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         val_output_convert = [
             self.post_pred(val_pred_tensor) for val_pred_tensor in val_outputs_list
         ]
-        del val_labels_list, val_labels_convert,\
-            val_outputs_list, val_output_convert, batch
+        del val_labels_list,\
+            val_outputs_list, batch
         gc.collect()
         self.dice_metric(y_pred=val_output_convert, y=val_labels_convert)
     
