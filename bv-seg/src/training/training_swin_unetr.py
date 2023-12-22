@@ -133,8 +133,6 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         self.epoch_iterator = tqdm(
             self.train_data_loader, desc="Training (X / X Steps) (loss=X.X)", dynamic_ncols=True
         )
-        self.post_label = AsDiscrete(to_onehot=1, dtype=torch.float)
-        self.post_pred = AsDiscrete(argmax=True, to_onehot=1)
         self.dice_metric = DiceMetric(include_background=True, reduction="mean", get_not_nans=False)
     
     @profile
@@ -187,15 +185,9 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         with torch.cuda.amp.autocast():
             val_outputs = sliding_window_inference(val_inputs, tuple([self.split_size]*3), 1, self.model)
         val_labels_list = decollate_batch(val_labels)
-        val_labels_convert = [
-            self.post_label(val_label_tensor) for val_label_tensor in val_labels_list
-        ]
         val_outputs_list = decollate_batch(val_outputs)
-        val_output_convert = [
-            self.post_pred(val_pred_tensor) for val_pred_tensor in val_outputs_list
-        ]
         self.dice_metric(y_pred=val_output_convert, y=val_labels_convert)
-        del val_labels_list,val_outputs_list, batch, val_output_convert, val_labels_convert
+        del val_labels_list,val_outputs_list, batch
         gc.collect()
 
     def epoch(
@@ -244,7 +236,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
                 gc.collect()
             mean_dice_val = self.dice_metric.aggregate().item()
             self.dice_metric.reset()
-            current_metrics["val_loss"] += mean_dice_val
+            current_metrics["validation_loss"] += mean_dice_val
         for key, value in current_metrics.items():
             self.history[key].append(value)
     
