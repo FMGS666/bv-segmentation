@@ -74,6 +74,7 @@ def save_volumes(
         train_splits_groups,
         context_length,
         n_samples,
+        True,
         subsample = subsample,
         dump_folder = volumes_folder
     )
@@ -81,6 +82,7 @@ def save_volumes(
         test_groups,
         context_length,
         n_samples,
+        False,
         subsample = False,
         dump_folder = volumes_folder
     )

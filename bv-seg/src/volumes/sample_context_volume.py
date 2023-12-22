@@ -94,6 +94,7 @@ def save_context_volumes_to_nii_gz(
         dataset_name: str,
         split_id: int,
         volumes: list[dict[str, np.ndarray]],
+        train: bool,
         dump_folder: str = "./data/splits_sampled_volumes"
     ) -> None:
     dataset_folder = os.path.join(
@@ -112,30 +113,34 @@ def save_context_volumes_to_nii_gz(
         split_folder, 
         "images"
     )
-    split_folder_masks = os.path.join(
-        split_folder, 
-        "masks"
-    )
+    if train:
+        split_folder_masks = os.path.join(
+            split_folder, 
+            "masks"
+        )
+        if not os.path.exists(split_folder_masks):
+            os.mkdir(split_folder_masks)
     if not os.path.exists(split_folder_images):
         os.mkdir(split_folder_images)
-    if not os.path.exists(split_folder_masks):
-        os.mkdir(split_folder_masks)
     n_saved_volumes = len(os.listdir(split_folder_images))
     for idx, volumes in enumerate(volumes):
         image_volume = volumes["image"]
-        mask_volume = volumes["label"]
         volume_id = f"volume_{idx + n_saved_volumes}.nii.gz"
         image_dump_path = os.path.join(
             split_folder_images, 
             volume_id
         )
-        mask_dump_path = os.path.join(
-            split_folder_masks, 
-            volume_id
-        )
         image_volume = nib.Nifti1Image(image_volume, None)
-        mask_volume = nib.Nifti1Image(mask_volume, None)
         nib.save(image_volume, image_dump_path)
-        nib.save(mask_volume, mask_dump_path)
-        del image_volume, mask_volume
+        del image_volume
         gc.collect()
+        if train:
+            mask_volume = volumes["label"]
+            mask_dump_path = os.path.join(
+                split_folder_masks, 
+                volume_id
+            )
+            mask_volume = nib.Nifti1Image(mask_volume, None)
+            nib.save(mask_volume, mask_dump_path)
+            del mask_volume
+            gc.collect

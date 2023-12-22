@@ -10,8 +10,9 @@ def write_volumes_to_tif(
         train_splits_groups: dict,
         context_length: int,
         n_samples: int,
+        train: bool,
         subsample: bool = True,
-        dump_folder: str = "./data/splits_sampled_volumes"
+        dump_folder: str = "./data/splits_sampled_volumes",
     ) -> None:
     train_splits_sample_volumes = {
         dataset_name: {
@@ -19,7 +20,8 @@ def write_volumes_to_tif(
                 split,
                 context_length = context_length,
                 n_samples = n_samples,
-                subsample = subsample
+                subsample = subsample,
+                train = train
             )
             for split_id, split in split_groups.items()
         }
@@ -31,6 +33,7 @@ def write_volumes_to_tif(
                 dataset_name,
                 splt_id,
                 split_volumes,
+                train,
                 dump_folder = dump_folder
             )
             del split_volumes
