@@ -197,8 +197,6 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         del val_labels_list, val_labels_convert,\
             val_outputs_list, val_output_convert, batch
         gc.collect()
-        cuda.empty_cache()
-
         self.dice_metric(y_pred=val_output_convert, y=val_labels_convert)
     
     def epoch(
@@ -245,9 +243,9 @@ class BVSegSwinUnetRTraining(BVSegTraining):
                 self.validation_pass(batch)
                 del batch
                 gc.collect()
-                cuda.empty_cache()
             mean_dice_val = self.dice_metric.aggregate().item()
             self.dice_metric.reset()
+            cuda.empty_cache()
             current_metrics["val_loss"] += mean_dice_val
         for key, value in current_metrics.items():
             self.history[key].append(value)
