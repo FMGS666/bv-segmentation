@@ -239,4 +239,5 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             current_metrics["validation_loss"] += mean_dice_val
         for key, value in current_metrics.items():
             self.history[key].append(value)
+        return current_metrics
     

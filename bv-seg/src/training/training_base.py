@@ -359,7 +359,6 @@ class BVSegTraining(object):
         for epoch in range(self.epochs):
             print(f"epoch: {epoch + 1}/{self.epochs}")
             current_metrics = self.epoch(epoch)
-            self.display_metrics(current_metrics)
             self.dump_logs(epoch)
             if self.track_validation_progress():
                 print("Validation loss decreasing, saving the model")
