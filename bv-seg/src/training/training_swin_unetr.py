@@ -186,7 +186,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             val_outputs = sliding_window_inference(val_inputs, tuple([self.split_size]*3), 1, self.model)
         val_labels_list = decollate_batch(val_labels)
         val_outputs_list = decollate_batch(val_outputs)
-        self.dice_metric(y_pred=val_output_convert, y=val_labels_convert)
+        self.dice_metric(y_pred=val_outputs_list, y=val_labels_list)
         del val_labels_list,val_outputs_list, batch
         gc.collect()
 
@@ -235,8 +235,8 @@ class BVSegSwinUnetRTraining(BVSegTraining):
                 del batch
                 gc.collect()
             mean_dice_val = self.dice_metric.aggregate().item()
-            self.dice_metric.reset()
             current_metrics["validation_loss"] += mean_dice_val
+            self.dice_metric.reset()
         for key, value in current_metrics.items():
             self.history[key].append(value)
         return current_metrics
