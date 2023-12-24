@@ -276,6 +276,6 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             type = int,
             help = "The size of the patches",
             required = False,
-            default = 64
+            default = 128
         )
         
