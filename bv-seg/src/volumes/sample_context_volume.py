@@ -70,7 +70,7 @@ def sample_random_window_context(
                 mask_file_loader = TifFileLoader(mask_path)
                 mask_array = mask_file_loader.image_array
                 mask_volume.append(mask_array)
-
+                assert(mask_file_loader.slice_id == image_file_loader.slice_id)
         image_volume = np.stack(image_volume, axis = 0)
         assert image_volume.ndim == 3, f"{image_volume.shape=}"
         if train:
