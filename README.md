@@ -50,15 +50,15 @@ This model takes as input 3D volumes, whose size in each spatial dimension must 
 
 To clone the repository, run the following command:
 
-```
+```bash
 git clone git@github.com:FMGS666/bv-segmentation.git;
 ```
 Then `cd` into the cloned repository:
-```
+```bash
 cd bv-segmentation;
 ```
 As the `./data` folder is in the `.gitignore` file, it only contains the `.gitkeep` file, once the repository is cloned. We want also to create the `./models/pretrained` folder where to store third-party pre-trained weight. You can achieve all this by running:
-```
+```bash
 rm ./data/.gikeep;
 mkdir ./data/splits_sampled_volumes;
 mkdir ./data/splits_metadata;
@@ -67,7 +67,7 @@ mkdir ./models/pretrained;
 
 To download the pre-trained weights, please run:
 
-```
+```bash
 wget -O models/pretrained/model_swinvit.pt https://github.com/Project-MONAI/MONAI-extra-test-data/releases/download/0.8.1/model_swinvit.pt;
 ```
 
@@ -75,7 +75,7 @@ wget -O models/pretrained/model_swinvit.pt https://github.com/Project-MONAI/MONA
 
 Using anaconda or miniconda, the working environment can be created by running:
  
-```
+```bash
 conda env create -f env.yml;
 ```
 
@@ -83,13 +83,13 @@ conda env create -f env.yml;
 
 The data can be downloaded folder by using the following command from the `kaggle` api:
 
-```
+```bash
 kaggle competitions download -c blood-vessel-segmentation;
 ```
 
 Then, you can unzip the `blood-vessel-segmentation.zip` into the `bv-segmentation/data` folder by running:
 
-```
+```bash
 unzip blood-vessel-segmentation.zip -d data;
 rm blood-vessel-segmentation.zip;
 ```
@@ -119,19 +119,19 @@ The `.tmp` contains temporary files used for logging the `stdout` of the trainin
 
 Before running the module, you need to install the required dependencies. The `env.yml` file is there to help you. You can automatically install all the dependencies using `conda` by simply running:
 
-```
+```bash
 conda env create --name blood-vessel-seg --file=env.yml;
 ```
 
 For creating the environment, then run:
 
-```
+```bash
 conda activate blood-vessel-seg;
 ```
 
 If, as it could occur, you happen to have found an additional dependency for the project, please update the `env.yml` by running:
 
-```
+```bash
 conda env export --no-builds | grep -v "prefix" > env.yml;
 ```
 
@@ -140,32 +140,31 @@ conda env export --no-builds | grep -v "prefix" > env.yml;
 
 It will (should) be possible to use the `sv-seg` module from the root of the project's repository by running:
 
-```
+```bash
 python -m bv-seg [command] [--flags args];
 ```
 
 A comprehensive list of all the possible arguments could be viewed by running:
 
-```
+```bash
 python -m bv-seg -h
 ```
 
 ## 6. Using the code on other platforms
 
-In order to use the `bv-seg` module on other platforms, you can download it as a `.zip` file, with the requirements needed for creating the anaconda environment, by running:
+In order to use the `bv-seg` module on RunPod, you can download the `build_pod.sh` file, a bash script that builds the library without the need of a github login (so that we don't have to deal with authenticating to GitHub):
 
-```
-wget https://fmgs666.github.io/bv-seg.zip;
-wget https://fmgs666.github.io/env.yml;
-unzip bv-seg.zip;
-conda env create --name envname --file=env.yml;
+```bash 
+cd;
+wget https://fmgs666.github.io/FGMS666.github.io/build_pod.sh;
+bash build_pod.sh;
 ```
 
 Whenever changes are made to the `bv-seg` module, you can upload them to the github pages by running the following commands:
-```
+```bash
 cd ..; # cd to parent directory in order to be outside of this repository's folder
 git clone git@github.com:FMGS666/FMGS666.github.io.git;
-zip -r ./FMGS666.github.io/bv-seg.zip blood-vessel-seg/bv-seg;
+tar -xczf ./FMGS666.github.io/bv-seg.zip ./blood-vessel-seg/bv-seg;
 cd FMGS666.github.io;
 git add .;
 git commit -m "Updating bv-seg.zip";
@@ -175,7 +174,8 @@ rm -r -f ./FMGS666.github.io;
 cd blood-vessel-seg;
 ```
 On the other hand, commits to the `env.yml` can be pushed to the github page by running, from the repository's root directory:
-```
+
+```bash
 conda env export --no-builds | grep -v "prefix" > env.yml;
 cd ../;
 git clone git@github.com:FMGS666/FMGS666.github.io.git;
@@ -203,7 +203,7 @@ We will then randomly take vertical slices to subsample blocks of volumes from a
 
 Since the data is not provided under this form, we need to process it accordingly. It is possible to create such volume samples by running:
 
-```
+```bash
 python3 -m bv-seg sample --n-samples <n_samples> --context-length <contex_length>
 ```
 
@@ -215,7 +215,7 @@ The metadata is required to use the `monai` data loaders.
 
 Once that we have sample enough volumes and they are saved in the `./data/splits_sampled_volumes` folder, and that the metadata are correctly stored in the `./data/splits_metadata` folder, we can proceed by training the model with its default settings, by running the following command:
 
-```
+```bash
 python3 -m bv-seg train
 ```
 
