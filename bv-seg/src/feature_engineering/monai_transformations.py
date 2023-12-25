@@ -130,7 +130,7 @@ def get_monai_transformations(
             Orientationd(keys=["image"], axcodes="RAS"),
             Spacingd(
                 keys=["image"],
-                pixdim=5,
+                pixdim=(1.0, 1.5, 2.0),
                 mode=("bilinear"),
             ),
             EnsureTyped(keys=["image"], device=device, track_meta=True),

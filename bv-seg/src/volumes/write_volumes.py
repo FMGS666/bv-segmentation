@@ -11,7 +11,7 @@ def write_volumes_to_tif(
         context_length: int,
         n_samples: int,
         train: bool,
-        subsample: bool = True,
+        subsample: bool,
         dump_folder: str = "./data/splits_sampled_volumes",
     ) -> None:
     train_splits_sample_volumes = {

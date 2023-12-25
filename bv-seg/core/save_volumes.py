@@ -19,7 +19,7 @@ def save_volumes(
     context_length = args.context_length
     n_samples = args.n_samples
     volumes_path = args.volumes_path
-    subsample = args.full_volumes
+    subsample = args.subsample
     # loading the data
     print("retrieving the paths of each individual dataset")
     train_datasets_paths = get_datasets_from_data_path(

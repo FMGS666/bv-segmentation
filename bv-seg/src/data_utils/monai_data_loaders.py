@@ -19,6 +19,7 @@ def create_data_loaders_from_splits_metadata(
         validation_batch_size = 1,
     ) -> dict[str, dict[int, dict[str, ThreadDataLoader]]]:
     """
+    
     """
     result_dictionary = dict()
     dataset_names = os.listdir(splits_metadata_path)
@@ -34,7 +35,6 @@ def create_data_loaders_from_splits_metadata(
                 dataset_path, 
                 split
             )
-
             train_files = load_decathlon_datalist(split_metadata_path, True, "training", base_dir = "./")
             train_ds = CacheDataset(
                 data=train_files, transform=train_transforms, cache_num=24, cache_rate=1.0, num_workers=2
@@ -46,5 +46,4 @@ def create_data_loaders_from_splits_metadata(
                 data=val_files, transform=val_transforms, cache_num=6, cache_rate=1.0, num_workers=2
             )
             val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=validation_batch_size)
-
             yield dataset_id, split_id, train_loader, val_loader

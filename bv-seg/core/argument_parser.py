@@ -173,10 +173,10 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             default = 1
         )
         self.add_argument(
-            '-fv', 
-            '--full-volumes',
+            '-sb', 
+            '--subsample',
             help = "Whether to take full slices for creating volumes",
-            action = "store_false"
+            action = "store_true"
         ) 
         self.add_argument(
             '-vp', 

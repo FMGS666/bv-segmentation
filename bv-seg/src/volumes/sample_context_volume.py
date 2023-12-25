@@ -39,10 +39,10 @@ def sample_random_window_context_indexes(
 
 def sample_random_window_context(
         iterable_to_sample: Iterable,
-        context_length: int = 50,
-        n_samples: int = 1,
-        subsample: bool = True,
-        train: bool = True 
+        context_length: int,
+        n_samples: int,
+        subsample: bool,
+        train: bool 
     ) -> list[dict[str, np.ndarray]]:
     """
     
