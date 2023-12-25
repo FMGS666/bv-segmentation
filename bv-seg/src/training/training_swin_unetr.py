@@ -181,7 +181,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         
         Performs a forward on a validation batch and returns the obtained validation loss.
         """
-        val_inputs, val_labels = (batch["image"], batch["label"])
+        val_inputs, val_labels = (batch["image"].cuda(), batch["label"].cuda())
         with torch.cuda.amp.autocast():
             val_outputs = sliding_window_inference(val_inputs, tuple([self.split_size]*3), 1, self.model)
         val_labels_list = decollate_batch(val_labels)
