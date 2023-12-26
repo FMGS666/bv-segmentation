@@ -224,7 +224,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             type = float,
             help = "The learning rate which to start the tuning with",
             required = False,
-            default = 1e-4
+            default = 8e-4
         )
         self.add_argument(
             '-wd', 
