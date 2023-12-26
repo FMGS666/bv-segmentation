@@ -67,24 +67,28 @@ def train(
             validation_batch_size = validation_batch_size
         )
         loss_function = DiceCELoss(sigmoid = True)
+        train_data_loaders = []
+        val_data_loaders = []
         for (dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
             if split_id == split_to_train:
-                trainer = BVSegSwinUnetRTraining(
-                    model,
-                    train_data_loader,
-                    validation_data_loader,
-                    optimizer,
-                    loss_function,
-                    initial_learning_rate = initial_learning_rate,
-                    scheduler = scheduler,
-                    epochs = epochs,
-                    patience = patience,
-                    sched_step_after_train = sched_step_after_train,
-                    model_name = model_name,
-                    dump_dir = dump_path,
-                    log_dir = log_path,
-                    optimizer_kwargs = None,
-                    scheduler_kwargs = None,
-                    split_size = patch_size 
-                )
+                train_data_loaders.append(train_data_loader)
+                val_data_loaders.append(val_data_loaders)
+        trainer = BVSegSwinUnetRTraining(
+            model,
+            train_data_loaders,
+            validation_data_loaders,
+            optimizer,
+            loss_function,
+            initial_learning_rate = initial_learning_rate,
+            scheduler = scheduler,
+            epochs = epochs,
+            patience = patience,
+            sched_step_after_train = sched_step_after_train,
+            model_name = model_name,
+            dump_dir = dump_path,
+            log_dir = log_path,
+            optimizer_kwargs = None,
+            scheduler_kwargs = None,
+            split_size = patch_size 
+        )
                 trainer.fit()

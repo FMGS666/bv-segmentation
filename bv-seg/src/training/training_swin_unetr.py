@@ -217,35 +217,33 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         current_metrics = {
             metric_name: 0.0 for metric_name in self.history.keys()
         }
-        self.model.train(
-            True
-        )
-        epoch_iterator = tqdm(
-            self.train_data_loader, desc="Training (X / X Steps) (loss=X.X)", dynamic_ncols=True
-        )
-        epoch_iterator_val = tqdm(
-            self.val_data_loader, desc="Validate (X / X Steps) (dice=X.X)", dynamic_ncols=True
-        )
-        print("Performing training pass")
-        for idx, batch in enumerate(epoch_iterator):
-            train_loss = self.training_pass(batch)
-            epoch_iterator.set_description(
-                "Training (%d / %d Steps) (loss=%2.5f)"
-                % (idx + 1, len(self.train_data_loader), train_loss)
+        for train_data_loader in self.train_data_loader:
+            self.model.train(
+                True
             )
-            del batch
-            gc.collect()
-            cuda.empty_cache()
-            current_metrics["train_loss"] += train_loss
-        self.model.eval()
-        with torch.no_grad():
-            for idx, batch in enumerate(epoch_iterator_val):
-                self.validation_pass(batch)
+            epoch_iterator = tqdm(
+                train_data_loader, desc="Training (X / X Steps) (loss=X.X)", dynamic_ncols=True
+            )
+            print("Performing training pass")
+            for idx, batch in enumerate(epoch_iterator):
+                train_loss = self.training_pass(batch)
                 del batch
                 gc.collect()
-            mean_dice_val = self.dice_metric.aggregate().item()
-            current_metrics["validation_loss"] += mean_dice_val
-            self.dice_metric.reset()
+                cuda.empty_cache()
+                current_metrics["train_loss"] += train_loss
+        for val_data_loader in self.val_data_loader:
+            self.model.eval()
+            epoch_iterator_val = tqdm(
+                val_data_loader, desc="Validate (X / X Steps) (dice=X.X)", dynamic_ncols=True
+            )
+            with torch.no_grad():
+                for idx, batch in enumerate(epoch_iterator_val):
+                    self.validation_pass(batch)
+                    del batch
+                    gc.collect()
+                mean_dice_val = self.dice_metric.aggregate().item()
+                current_metrics["validation_loss"] += mean_dice_val
+                self.dice_metric.reset()
         for key, value in current_metrics.items():
             self.history[key].append(value)
         return current_metrics
