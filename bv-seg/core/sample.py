@@ -15,10 +15,9 @@ def sample(
     random_state = args.random_state
     shuffle = args.shuffle
     splits_metadata_path = args.splits_metadata_path
-    volumes_folder = args.volumes_path
+    volumes_folder = args.volumes_folder
     context_length = args.context_length
     n_samples = args.n_samples
-    volumes_path = args.volumes_path
     subsample = args.subsample
     # loading the data
     print("retrieving the paths of each individual dataset")
@@ -91,7 +90,7 @@ def sample(
     print("test volumes written, dumping metadata")
     # Now we should construct the dataloader from the sampled volumes
     train_volumes = {
-        dataset_name: os.path.join(volumes_path, dataset_name)
+        dataset_name: os.path.join(volumes_folder, dataset_name)
         for dataset_name in train_splits_groups.keys()
     }
     train_volumes = {
@@ -100,7 +99,7 @@ def sample(
     }
     # Now we should construct the dataloader from the sampled volumes
     test_volumes = {
-        dataset_name: os.path.join(volumes_path, dataset_name)
+        dataset_name: os.path.join(volumes_folder, dataset_name)
         for dataset_name in test_groups.keys()
     }
     test_volumes = {

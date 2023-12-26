@@ -128,13 +128,16 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             gradient_clipping = gradient_clipping,
             relative_improvement = relative_improvement,
             scale_grad = scale_grad,
-            verbose = verbose
+            verbose = verbose,
+            decrease = False
         )
         self.epoch_iterator = tqdm(
             self.train_data_loader, desc="Training (X / X Steps) (loss=X.X)", dynamic_ncols=True
         )
-        self.dice_metric = DiceMetric(include_background=True, reduction="mean", get_not_nans=False)
-    
+        self.dice_metric = DiceMetric(include_background=True, reduction="mean", get_not_nans=False, num_classes = 2)
+        self.post_label = AsDiscrete()
+        self.post_pred = AsDiscrete(threshold = 0.0)
+
     @profile
     def training_pass(
             self,
@@ -185,8 +188,14 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         with torch.cuda.amp.autocast():
             val_outputs = sliding_window_inference(val_inputs, tuple([self.split_size]*3), 1, self.model)
         val_labels_list = decollate_batch(val_labels)
+        val_labels_convert = [
+            self.post_label(val_label_tensor) for val_label_tensor in val_labels_list
+        ]
         val_outputs_list = decollate_batch(val_outputs)
-        self.dice_metric(y_pred=val_outputs_list, y=val_labels_list)
+        val_outputs_convert = [
+            self.post_pred(val_pred_tensor) for val_pred_tensor in val_outputs_list
+        ]
+        self.dice_metric(y_pred=val_outputs_convert, y=val_labels_convert)
         del val_labels_list,val_outputs_list, batch
         gc.collect()
 

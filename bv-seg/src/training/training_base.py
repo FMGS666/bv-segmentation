@@ -54,7 +54,8 @@ class BVSegTraining(object):
             gradient_clipping: float | None = 1.0,
             relative_improvement: bool = False,
             scale_grad: bool = True,
-            verbose: bool = True  
+            verbose: bool = True,
+            decrease: bool = False
         ) -> None:
         """
         Arguments: 
@@ -122,6 +123,7 @@ class BVSegTraining(object):
         self.split_size = split_size
         self.tollerance = tollerance
         self.amp = amp
+        self.decrease = decrease
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.amp)
         self.gradient_clipping = gradient_clipping
         self.history = {
@@ -260,8 +262,10 @@ class BVSegTraining(object):
         current_best_loss = min(self.history["validation_loss"][:-1])
         current_loss = self.history["validation_loss"][-1]
         if self.relative_improvement:
-            return (current_best_loss - current_loss) / current_best_loss > self.tollerance
-        return (current_best_loss - current_loss) > self.tollerance
+            return (current_best_loss - current_loss) / current_best_loss > self.tollerance if self.decrease \
+                else (current_loss - current_best_loss) / current_best_loss > self.tollerance
+        return (current_best_loss - current_loss) > self.tollerance if self.decrease \
+            else (current_loss - current_best_loss) > self.tollerance
     
     def dump_model(
             self
@@ -371,4 +375,4 @@ class BVSegTraining(object):
                 if self.n_epochs_with_no_progress > self.patience:
                     print(f"patience reached, quitting the training")
                     break
-        return min(self.history[self.metric_to_monitor])
+        return min(self.history["validation_loss"])

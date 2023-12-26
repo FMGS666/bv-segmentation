@@ -35,6 +35,7 @@ def create_data_loaders_from_splits_metadata(
                 dataset_path, 
                 split
             )
+            print(f"{dataset_name=}, {split_id=} {split_metadata_path=}")
             train_files = load_decathlon_datalist(split_metadata_path, True, "training", base_dir = "./")
             train_ds = CacheDataset(
                 data=train_files, transform=train_transforms, cache_num=24, cache_rate=1.0, num_workers=2

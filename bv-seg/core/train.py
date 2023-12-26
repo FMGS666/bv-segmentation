@@ -66,7 +66,7 @@ def train(
             train_batch_size = train_batch_size,
             validation_batch_size = validation_batch_size
         )
-        loss_function = DiceCELoss()
+        loss_function = DiceCELoss(sigmoid = True)
         for (dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
             if split_id == split_to_train:
                 trainer = BVSegSwinUnetRTraining(
