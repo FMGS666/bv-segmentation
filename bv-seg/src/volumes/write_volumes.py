@@ -14,27 +14,14 @@ def write_volumes_to_tif(
         subsample: bool,
         dump_folder: str = "./data/splits_sampled_volumes",
     ) -> None:
-    train_splits_sample_volumes = {
-        dataset_name: {
-            split_id: sample_random_window_context(
+    for dataset_name, split_groups in train_splits_groups.items():
+        for split_id, split in split_groups.items():
+            sample_random_window_context(
+                dataset_name,
+                split_id,
                 split,
                 context_length = context_length,
                 n_samples = n_samples,
                 subsample = subsample,
                 train = train
             )
-            for split_id, split in split_groups.items()
-        }
-        for dataset_name, split_groups in train_splits_groups.items()
-    }
-    for dataset_name, splits in train_splits_sample_volumes.items():
-        for splt_id, split_volumes in splits.items():
-            save_context_volumes_to_nii_gz(
-                dataset_name,
-                splt_id,
-                split_volumes,
-                train,
-                dump_folder = dump_folder
-            )
-            del split_volumes
-            gc.collect()

@@ -7,7 +7,7 @@ import torch
 import sys
 
 from .core.argument_parser import BVSegArgumentParser
-from .core.save_volumes import save_volumes
+from .core.sample import sample
 from .core.train import train
 
 supported_commands = [
@@ -23,8 +23,9 @@ if __name__ == "__main__":
         supported_commands
     )        
     args = arg_parser.parse_args()
+    print(f"{args=}")
     if args.command == "sample":
-        save_volumes(
+        sample(
             args
         )
     if args.command == "train":

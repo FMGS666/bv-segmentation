@@ -38,12 +38,15 @@ def sample_random_window_context_indexes(
     return context_windows
 
 def sample_random_window_context(
+        dataset_name: str,
+        split_id: int,
         iterable_to_sample: Iterable,
         context_length: int,
         n_samples: int,
         subsample: bool,
-        train: bool 
-    ) -> list[dict[str, np.ndarray]]:
+        train: bool,
+        dump_folder: str = "./data/splits_sampled_volumes"
+    ) -> None:
     """
     
     """
@@ -54,8 +57,8 @@ def sample_random_window_context(
         n_samples,
         subsample
     )
-    volumes = []
     for (l_slice_id, u_slice_id) in context_window_indexes:
+        volumes = []
         context_window_paths = iterable_to_sample[l_slice_id: u_slice_id] if subsample\
             else iterable_to_sample
         image_volume = []
@@ -88,7 +91,15 @@ def sample_random_window_context(
                     "image": image_volume,
                 }
             )
-    return volumes
+        save_context_volumes_to_nii_gz(
+            dataset_name,
+            split_id, 
+            volumes, 
+            train, 
+            dump_folder=dump_folder
+        )
+        del volumes
+        gc.collect()
         
 def save_context_volumes_to_nii_gz(
         dataset_name: str,

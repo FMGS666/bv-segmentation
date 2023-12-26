@@ -6,7 +6,7 @@ from ..src.model_selection.utils import retrieve_filenames_from_split_indexes, r
 from ..src.data_utils.utils import get_volumes_fold_splits, get_datasets_from_data_path, dump_dataset_metadata
 from ..src.volumes.write_volumes import write_volumes_to_tif
 
-def save_volumes(
+def sample(
         args: dict
     ) -> None:
     train_data_path = args.train_data_path
@@ -48,7 +48,6 @@ def save_volumes(
             shuffle = shuffle
         ) for dataset_name, dataset_iterable_folder in train_iterable_folders.items()
     }
-    print("retrieving the file names")
     train_datasets_splits_paths = {
         dataset_name: retrieve_filenames_from_split_indexes(
             train_iterable_folders[dataset_name],
@@ -71,6 +70,7 @@ def save_volumes(
             ]
         } for dataset_name, iterable_folder in test_iterable_folders.items()
     }
+    print("writing train volumes")
     write_volumes_to_tif(
         train_splits_groups,
         context_length,
@@ -79,6 +79,7 @@ def save_volumes(
         subsample = subsample,
         dump_folder = volumes_folder
     )
+    print("train volumes written\nwriting test volumes")
     write_volumes_to_tif(
         test_groups,
         context_length,
@@ -87,7 +88,7 @@ def save_volumes(
         subsample = False,
         dump_folder = volumes_folder
     )
-    
+    print("test volumes written, dumping metadata")
     # Now we should construct the dataloader from the sampled volumes
     train_volumes = {
         dataset_name: os.path.join(volumes_path, dataset_name)
