@@ -33,8 +33,7 @@ class BVSegTraining(object):
     def __init__(
             self,
             model: nn.Module,
-            train_data_loader: Iterable,
-            val_data_loader: Iterable, 
+            data_loaders_yielder: Iterable,
             optimizer: Optimizer,
             loss: nn.Module,
             initial_learning_rate: float | None = None,
@@ -100,8 +99,7 @@ class BVSegTraining(object):
             
         """
         self.model = model
-        self.train_data_loader = train_data_loader
-        self.val_data_loader = val_data_loader
+        self.data_loaders_yielder = data_loaders_yielder
         self.optimizer = optimizer
         self.initial_learning_rate = initial_learning_rate
         self.loss = loss

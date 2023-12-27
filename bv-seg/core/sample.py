@@ -23,7 +23,6 @@ def sample(
     train_datasets_paths = get_datasets_from_data_path(
         train_data_path
     )
-    print(f"{train_data_path=}, {test_data_path=}")
     print("defining iterable folder for training images")
     train_iterable_folders = {
         dataset_name: Tif3DVolumeIterableFolder(dataset_path, "train") 

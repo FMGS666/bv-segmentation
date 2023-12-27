@@ -38,8 +38,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
     def __init__(
             self,
             model: nn.Module,
-            train_data_loader: Iterable,
-            val_data_loader: Iterable, 
+            data_loaders_yielder: Iterable,
             optimizer: Optimizer,
             loss: nn.Module,
             initial_learning_rate: float | None = None,
@@ -106,8 +105,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         """
         super(BVSegSwinUnetRTraining, self).__init__(
             model,
-            train_data_loader,
-            val_data_loader, 
+            data_loaders_yielder,
             optimizer,
             loss,
             initial_learning_rate= initial_learning_rate,
@@ -217,7 +215,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         current_metrics = {
             metric_name: 0.0 for metric_name in self.history.keys()
         }
-        for train_data_loader in self.train_data_loader:
+        for train_data_loader, val_data_loader in self.data_loaders_yielder:
             self.model.train(
                 True
             )
@@ -231,7 +229,6 @@ class BVSegSwinUnetRTraining(BVSegTraining):
                 gc.collect()
                 cuda.empty_cache()
                 current_metrics["train_loss"] += train_loss
-        for val_data_loader in self.val_data_loader:
             self.model.eval()
             epoch_iterator_val = tqdm(
                 val_data_loader, desc="Validate (X / X Steps) (dice=X.X)", dynamic_ncols=True
