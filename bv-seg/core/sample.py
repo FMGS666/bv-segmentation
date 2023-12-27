@@ -15,7 +15,7 @@ def sample(
     random_state = args.random_state
     shuffle = args.shuffle
     splits_metadata_path = args.splits_metadata_path
-    volumes_folder = args.volumes_folder
+    volumes_path = args.volumes_path
     context_length = args.context_length
     n_samples = args.n_samples
     subsample = args.subsample
@@ -76,7 +76,7 @@ def sample(
         n_samples,
         True,
         subsample = subsample,
-        dump_folder = volumes_folder
+        dump_folder = volumes_path
     )
     print("train volumes written\nwriting test volumes")
     write_volumes_to_tif(
@@ -85,12 +85,12 @@ def sample(
         n_samples,
         False,
         subsample = False,
-        dump_folder = volumes_folder
+        dump_folder = volumes_path
     )
     print("test volumes written, dumping metadata")
     # Now we should construct the dataloader from the sampled volumes
     train_volumes = {
-        dataset_name: os.path.join(volumes_folder, dataset_name)
+        dataset_name: os.path.join(volumes_path, dataset_name)
         for dataset_name in train_splits_groups.keys()
     }
     train_volumes = {
@@ -99,7 +99,7 @@ def sample(
     }
     # Now we should construct the dataloader from the sampled volumes
     test_volumes = {
-        dataset_name: os.path.join(volumes_folder, dataset_name)
+        dataset_name: os.path.join(volumes_path, dataset_name)
         for dataset_name in test_groups.keys()
     }
     test_volumes = {
