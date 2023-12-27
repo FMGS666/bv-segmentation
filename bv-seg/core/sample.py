@@ -10,7 +10,6 @@ def sample(
         args: dict
     ) -> None:
     train_data_path = args.train_data_path
-    test_data_path = args.test_data_path
     K = args.K
     random_state = args.random_state
     shuffle = args.shuffle
@@ -24,18 +23,10 @@ def sample(
     train_datasets_paths = get_datasets_from_data_path(
         train_data_path
     )
-    test_datasets_paths = get_datasets_from_data_path(
-        test_data_path
-    )
-    print(f"{train_data_path=}, {test_data_path=}")
     print("defining iterable folder for training and test images")
     train_iterable_folders = {
         dataset_name: Tif3DVolumeIterableFolder(dataset_path, "train") 
         for dataset_name, dataset_path in train_datasets_paths.items() if dataset_name != "kidney_3_dense"
-    }
-    test_iterable_folders = {
-        dataset_name: Tif3DVolumeIterableFolder(dataset_path, "test")
-        for dataset_name, dataset_path in test_datasets_paths.items()
     }
     # performing K-Fold split
     print("splitting the training images using K-Fold")
@@ -58,17 +49,6 @@ def sample(
         dataset_name: retrieve_k_fold_groups(dataset_splits)
         for dataset_name, dataset_splits in train_datasets_splits_paths.items()
     }
-    # test groups
-    test_groups = {
-        dataset_name: {
-            0: [
-                {
-                    "image": image_path
-                }
-                for _, image_path, _ in iterable_folder
-            ]
-        } for dataset_name, iterable_folder in test_iterable_folders.items()
-    }
     print("writing train volumes")
     write_volumes_to_tif(
         train_splits_groups,
@@ -76,15 +56,6 @@ def sample(
         n_samples,
         True,
         subsample = subsample,
-        dump_folder = volumes_path
-    )
-    print("train volumes written\nwriting test volumes")
-    write_volumes_to_tif(
-        test_groups,
-        context_length,
-        n_samples,
-        False,
-        subsample = False,
         dump_folder = volumes_path
     )
     print("test volumes written, dumping metadata")
@@ -96,15 +67,6 @@ def sample(
     train_volumes = {
         dataset_name: get_volumes_fold_splits(train_volumes_directory)
         for dataset_name, train_volumes_directory in train_volumes.items()
-    }
-    # Now we should construct the dataloader from the sampled volumes
-    test_volumes = {
-        dataset_name: os.path.join(volumes_path, dataset_name)
-        for dataset_name in test_groups.keys()
-    }
-    test_volumes = {
-        dataset_name: get_volumes_fold_splits(train_volumes_directory)
-        for dataset_name, train_volumes_directory in test_volumes.items()
     }
     for dataset_name, splits in train_volumes.items():
         for split_id, split_dictionary in splits.items():
@@ -121,19 +83,5 @@ def sample(
                 split_id,
                 training_paths, 
                 validation_paths
-            )
-    for dataset_name, splits in test_volumes.items():
-        for split_id, split in splits.items():
-            metadata_dir = os.path.join(
-                splits_metadata_path,
-                dataset_name
-            )
-            if not os.path.exists(metadata_dir):
-                os.mkdir(metadata_dir)
-            dump_dataset_metadata(
-                metadata_dir,
-                split_id, 
-                split,
-                None
             )
     

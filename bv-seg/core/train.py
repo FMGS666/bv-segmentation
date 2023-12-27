@@ -60,7 +60,7 @@ def train(
             initial_learning_rate
         )
         train_data_loader, validation_data_loader = create_data_loaders_from_splits_metadata(
-            K,
+            split_to_train,
             splits_metadata_path,
             train_transforms,
             val_transforms,
