@@ -59,7 +59,8 @@ def train(
             optimizer, 
             initial_learning_rate
         )
-        splits_data_loaders = create_data_loaders_from_splits_metadata(
+        train_data_loader, validation_data_loader = create_data_loaders_from_splits_metadata(
+            K,
             splits_metadata_path,
             train_transforms,
             val_transforms,
@@ -67,24 +68,22 @@ def train(
             validation_batch_size = validation_batch_size
         )
         loss_function = DiceCELoss(sigmoid = True)
-        for (dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
-            if split_id == split_to_train:
-                trainer = BVSegSwinUnetRTraining(
-                    model,
-                    train_data_loader,
-                    validation_data_loader,
-                    optimizer,
-                    loss_function,
-                    initial_learning_rate = initial_learning_rate,
-                    scheduler = scheduler,
-                    epochs = epochs,
-                    patience = patience,
-                    sched_step_after_train = sched_step_after_train,
-                    model_name = model_name,
-                    dump_dir = dump_path,
-                    log_dir = log_path,
-                    optimizer_kwargs = None,
-                    scheduler_kwargs = None,
-                    split_size = patch_size 
-                )
-                trainer.fit()
+        trainer = BVSegSwinUnetRTraining(
+            model,
+            train_data_loader,
+            validation_data_loader,
+            optimizer,
+            loss_function,
+            initial_learning_rate = initial_learning_rate,
+            scheduler = scheduler,
+            epochs = epochs,
+            patience = patience,
+            sched_step_after_train = sched_step_after_train,
+            model_name = model_name,
+            dump_dir = dump_path,
+            log_dir = log_path,
+            optimizer_kwargs = None,
+            scheduler_kwargs = None,
+            split_size = patch_size 
+        )
+        trainer.fit()
