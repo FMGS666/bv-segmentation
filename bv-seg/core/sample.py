@@ -14,7 +14,7 @@ def sample(
     random_state = args.random_state
     shuffle = args.shuffle
     splits_metadata_path = args.splits_metadata_path
-    volumes_folder = args.volumes_folder
+    volumes_folder = args.volumes_path
     context_length = args.context_length
     n_samples = args.n_samples
     subsample = args.subsample

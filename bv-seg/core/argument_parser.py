@@ -208,7 +208,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             type = int,
             help = "The number of epochs which to train the model over",
             required = False,
-            default = 500
+            default = 800
         )
         self.add_argument(
             '-p', 

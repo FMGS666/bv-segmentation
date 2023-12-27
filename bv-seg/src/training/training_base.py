@@ -27,6 +27,7 @@ from typing import Iterable, Callable, Any
 from torch import nn, Tensor
 from torch.optim.lr_scheduler import LRScheduler 
 from torch.optim import Optimizer
+#from torch.utils.tensorboard import SummaryWriter
 
 class BVSegTraining(object):
     def __init__(
@@ -140,6 +141,9 @@ class BVSegTraining(object):
             os.mkdir(self.log_dir)
         except FileExistsError:
             pass
+        #self.writer = SummaryWriter(self.log_dir)
+        #self.writer.add_graph(self.model)
+        #self.writer.close()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.save_settings()
 
