@@ -33,7 +33,7 @@ def merge_split_metadata_file(
         "merged_splits"
     )
     dataset_names = os.listdir(splits_metadata_path)
-    print(f"{K=}")
+    #print(f"{K=}")
     for dataset_id, dataset_name in enumerate(dataset_names):
         print(f"{dataset_id=}, {dataset_name=}")
         dataset_path = os.path.join(
@@ -50,8 +50,8 @@ def merge_split_metadata_file(
                 )
                 with open(split_metadata_path, "r") as metadata_file:
                     split_metadata = json.load(metadata_file)
-                print(f"{len(split_metadata['training'])=}")
-                print(f"{len(split_metadata['validation'])=}")
+                #print(f"{len(split_metadata['training'])=}")
+                #print(f"{len(split_metadata['validation'])=}")
                 current_split_metadata.append(split_metadata)
     merged_metadata_split = merge_list_of_dictionaries(current_split_metadata)
     merged_metadata_split_path = os.path.join(
