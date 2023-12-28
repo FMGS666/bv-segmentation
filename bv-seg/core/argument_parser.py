@@ -110,12 +110,12 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             help = f"The command to be run. The supported commands are: {self.supported_commands}",
         )
         self.add_argument(
-            '-smp', 
-            '--splits-metadata-path',
+            '-mbp', 
+            '---metadata-base-path',
             type = str,
             help = "The path where to save splits metadata",
             required = False,
-            default = "./data/splits_metadata"
+            default = "./data/splits_metadata/"
         )
 
         self.add_argument(
@@ -208,7 +208,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             type = int,
             help = "The number of epochs which to train the model over",
             required = False,
-            default = 100
+            default = 800
         )
         self.add_argument(
             '-p', 
@@ -224,7 +224,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             type = float,
             help = "The learning rate which to start the tuning with",
             required = False,
-            default = 1e-4
+            default = 8e-4
         )
         self.add_argument(
             '-wd', 

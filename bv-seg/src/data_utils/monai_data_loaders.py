@@ -7,7 +7,6 @@ import json
 from monai.data import (
     ThreadDataLoader,
     CacheDataset,
-    set_track_meta,
     load_decathlon_datalist
 )
 
@@ -22,21 +21,28 @@ def merge_list_of_dictionaries(
 
 def merge_split_metadata_file(
         K, 
-        splits_metadata_path
+        metadata_base_path,
     ):
     current_split_metadata = []
-    dataset_names = os.listdir(splits_metadata_path)
+    splits_metadata_path = os.path.join(
+        metadata_base_path, 
+        "individual_datasets"
+    )
     splits_merged_paths = os.path.join(
-        splits_metadata_path, 
+        metadata_base_path, 
         "merged_splits"
     )
+    dataset_names = os.listdir(splits_metadata_path)
+    print(f"{K=}")
     for dataset_id, dataset_name in enumerate(dataset_names):
+        print(f"{dataset_id=}, {dataset_name=}")
         dataset_path = os.path.join(
             splits_metadata_path, 
             dataset_name
         )
         splits = sorted(os.listdir(dataset_path))
         for split_id, split in enumerate(splits):
+            print(f"{split_id=}, {split=}")
             if split_id == K:
                 split_metadata_path = os.path.join(
                     dataset_path, 
@@ -44,6 +50,8 @@ def merge_split_metadata_file(
                 )
                 with open(split_metadata_path, "r") as metadata_file:
                     split_metadata = json.load(metadata_file)
+                print(f"{len(split_metadata['training'])=}")
+                print(f"{len(split_metadata['validation'])=}")
                 current_split_metadata.append(split_metadata)
     merged_metadata_split = merge_list_of_dictionaries(current_split_metadata)
     merged_metadata_split_path = os.path.join(
@@ -56,7 +64,7 @@ def merge_split_metadata_file(
 
 def create_data_loaders_from_splits_metadata(
         K,
-        splits_metadata_path,
+        metadata_base_path,
         train_transforms,
         val_transforms,
         train_batch_size = 1,
@@ -67,13 +75,13 @@ def create_data_loaders_from_splits_metadata(
     """
     split_merged_metadata_path = merge_split_metadata_file(
         K,
-        splits_metadata_path
+        metadata_base_path
     )
     train_files = load_decathlon_datalist(split_merged_metadata_path, True, "training", base_dir = "./")
     train_ds = CacheDataset(
         data=train_files, transform=train_transforms, cache_num=24, cache_rate=1.0, num_workers=2
     )
-    train_loader = ThreadDataLoader(train_ds, num_workers=0, batch_size=1, shuffle=True)
+    train_loader = ThreadDataLoader(train_ds, num_workers=0, batch_size=train_batch_size, shuffle=True)
 
     val_files = load_decathlon_datalist(split_merged_metadata_path, True, "validation", base_dir = "./")
     val_ds = CacheDataset(

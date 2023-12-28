@@ -26,7 +26,7 @@ def train(
     log_path = args.log_path
     relative_improvement = args.relative_improvement
     weight_decay = args.weight_decay
-    splits_metadata_path = args.splits_metadata_path
+    metadata_base_path = args.metadata_base_path
     patch_size = args.patch_size
     K = args.K
     # creating the data loader
@@ -61,7 +61,7 @@ def train(
         )
         train_data_loader, validation_data_loader = create_data_loaders_from_splits_metadata(
             split_to_train,
-            splits_metadata_path,
+            metadata_base_path,
             train_transforms,
             val_transforms,
             train_batch_size = train_batch_size,
@@ -86,4 +86,4 @@ def train(
             scheduler_kwargs = None,
             split_size = patch_size 
         )
-        trainer.fit()
+        #trainer.fit()

@@ -13,7 +13,10 @@ def sample(
     K = args.K
     random_state = args.random_state
     shuffle = args.shuffle
-    splits_metadata_path = args.splits_metadata_path
+    splits_metadata_path = os.path.join(
+        args.metadata_base_path,
+        "individual_datasets"
+    )
     volumes_path = args.volumes_path
     context_length = args.context_length
     n_samples = args.n_samples
