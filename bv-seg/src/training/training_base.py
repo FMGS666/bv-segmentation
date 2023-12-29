@@ -38,9 +38,9 @@ class BVSegTraining(object):
             loss: nn.Module,
             initial_learning_rate: float | None = None,
             scheduler: LRScheduler | None = None, 
+            warmup: BaseWarmup | None = None,
             epochs: int = 100,
             patience: int = 3, 
-            sched_step_after_train: bool = False,
             model_name: str = "UNet",
             dump_dir: str | Path = "./models",
             log_dir: str | Path = "./logs",
@@ -70,8 +70,6 @@ class BVSegTraining(object):
             * `epochs: int` -> the maximum number of epochs which to train the model over
             * `patience: int` -> the maximum number of epochs without improvement 
                 in the validation loss to wait before doing early stopping
-            * `sched_step_after_train: bool` -> whether to perform the scheduler step after 
-                training
             * `model_name: str` -> the name of the model
             * `dump_dir: str | Path` -> the directory where to save the 
                 trained models' state dictionaries
@@ -105,9 +103,9 @@ class BVSegTraining(object):
         self.initial_learning_rate = initial_learning_rate
         self.loss = loss
         self.scheduler = scheduler
+        self.warmup = warmup
         self.epochs = epochs
         self.patience = patience
-        self.sched_step_after_train = sched_step_after_train
         self.model_name = model_name
         self.dump_dir = dump_dir
         self.relative_improvement = relative_improvement

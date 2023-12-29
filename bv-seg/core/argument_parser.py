@@ -1,93 +1,3 @@
-f"""
-
-file: {__file__}
-
-Contents: 
-    *  BVSegArgumentParser
-
-Argument parser for our `bv-seg` module
-
-
-The available options are the following:
-  -h, --help            show this help message and exit
-
-  -trdp TRAIN_DATA_PATH, --train-data-path TRAIN_DATA_PATH
-                        Path to the raw train data
-
-  -tsdp TEST_DATA_PATH, --test-data-path TEST_DATA_PATH
-                        Path to the raw train data
-
-  -k K, --K K           K for the K-Fold Cross Validation
-
-  -r RANDOM_STATE, --random-state RANDOM_STATE
-                        Random state for the K-Fold Cross Validation
-
-  -S, --shuffle         Whether to shuffle observations or not for the K-Fold Cross Validation
-
-  -tbs TRAIN_BATCH_SIZE, --train-batch-size TRAIN_BATCH_SIZE
-                        The batch size for the training data loaders
-
-  -vbs VALIDATION_BATCH_SIZE, --validation-batch-size VALIDATION_BATCH_SIZE
-                        The batch size for the validation data loaders
-
-  -o OPTIMIZER_ID, --optimizer-id OPTIMIZER_ID
-                        The id of the optimizer to be used
-
-  -s SCHEDULER_ID, --scheduler-id SCHEDULER_ID
-                        The id of the scheduler to be used
-
-  -e EPOCHS, --epochs EPOCHS
-                        The number of epochs which to train the model over
-
-  -p PATIENCE, --patience PATIENCE
-                        The patience for early stopping
-
-  -lr INITIAL_LEARNING_RATE, --initial-learning-rate INITIAL_LEARNING_RATE
-                        The learning rate which to start the tuning with
-
-  -g GAMMA, --gamma GAMMA
-                        The gamma for the ExponentialLR scheduler
-
-  -a ALPHA, --alpha ALPHA
-                        The alpha for the RMSProp optimize
-
-  -P POWER, --power POWER
-                        The power for the PolynomialLR scheduler
-
-  -st, --sched-step-after-train
-                        Whether to shuffle observations or not for the K-Fold Cross Validation
-
-  -ri, --relative-improvement
-                        Whether to use relative improvement as stopping criterion
-
-  -n MODEL_NAME, --model-name MODEL_NAME
-                        The name for the model
-
-  -dp DUMP_PATH, --dump-path DUMP_PATH
-                        The path where to save the models
-
-  -lp LOG_PATH, --log-path LOG_PATH
-                        The path where to save logs during training
-
-  -smp SPLITS_METADATA_PATH, --splits-metadata-path SPLITS_METADATA_PATH
-                        The path where to save splits metadata
-
-  -c CONTEXT_LENGTH, --context-length CONTEXT_LENGTH
-                        The context length for sampling 3D volumes
-
-  -ns N_SAMPLES, --n-samples N_SAMPLES
-                        The number of 3D volumes to sample for each split
-                        
-  -wv, --write-volumes  Whether to write to disk new 3D volumes sampled from each split
-
-  -vp VOLUMES_PATH, --volumes-path VOLUMES_PATH
-                        The path to the 3D volumes Tif files
-
-  -dm, --dump-metadata  Whether to dump volumes metadata
-
-  -t, --train           Whether to perform training
-
-"""
 import argparse
 
 class BVSegArgumentParser(argparse.ArgumentParser):
@@ -235,12 +145,6 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             default = 1e-5
         )
         self.add_argument(
-            '-st', 
-            '--sched-step-after-train',
-            help = "Whether to shuffle observations or not for the K-Fold Cross Validation",
-            action = "store_true"
-        )
-        self.add_argument(
             '-ri', 
             '--relative-improvement',
             help = "Whether to use relative improvement as stopping criterion",
@@ -277,5 +181,21 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             help = "The size of the patches",
             required = False,
             default = 128
+        )
+        self.add_argument(
+            '-o', 
+            '--overlap',
+            type = float,
+            help = "The amount of overlap between windows for sliding window inference",
+            required = False,
+            default = 0.7
+        )
+        self.add_argument(
+            '-wp', 
+            '--warmup-period',
+            type = int,
+            help = "The warmup period",
+            required = False,
+            default = 50
         )
         

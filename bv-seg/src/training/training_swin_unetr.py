@@ -21,11 +21,13 @@ import gc
 from time import time
 from pathlib import Path
 from typing import Iterable, Callable, Any
+from tqdm import tqdm
+
 from torch import nn, Tensor, cuda
 from torch.optim.lr_scheduler import LRScheduler 
 from torch.optim import Optimizer
 from pytorch_memlab import profile
-from tqdm import tqdm
+from pytorch_warmup import BaseWarmup
 
 from monai.data import decollate_batch
 from monai.inferers import sliding_window_inference
@@ -44,9 +46,9 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             loss: nn.Module,
             initial_learning_rate: float | None = None,
             scheduler: LRScheduler | None = None, 
+            warmup: BaseWarmup | None = None,
             epochs: int = 100,
             patience: int = 3, 
-            sched_step_after_train: bool = False,
             model_name: str = "UNet",
             dump_dir: str | Path = "./models",
             log_dir: str | Path = "./logs",
@@ -61,7 +63,8 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             gradient_clipping: float = 1.0,
             relative_improvement: bool = False,
             scale_grad: bool = True,
-            verbose: bool = True  
+            verbose: bool = True,
+            overlap: float = 0.7 # check SwinUnetR Paper
         ) -> None:
         """
         Arguments: 
@@ -76,8 +79,6 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             * `epochs: int` -> the maximum number of epochs which to train the model over
             * `patience: int` -> the maximum number of epochs without improvement 
                 in the validation loss to wait before doing early stopping
-            * `sched_step_after_train: bool` -> whether to perform the scheduler step after 
-                training
             * `model_name: str` -> the name of the model
             * `dump_dir: str | Path` -> the directory where to save the 
                 trained models' state dictionaries
@@ -111,10 +112,10 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             optimizer,
             loss,
             initial_learning_rate= initial_learning_rate,
-            scheduler = scheduler, 
+            scheduler = scheduler,
+            warmup = warmup, 
             epochs = epochs,
             patience = patience, 
-            sched_step_after_train = sched_step_after_train,
             model_name = model_name,
             dump_dir = dump_dir,
             log_dir = log_dir,
@@ -137,6 +138,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         self.dice_metric = DiceMetric(include_background=True, reduction="mean", get_not_nans=False, num_classes = 2)
         self.post_label = AsDiscrete()
         self.post_pred = AsDiscrete(threshold = 0.0)
+        self.overlap = overlap
 
     @profile
     def training_pass(
@@ -157,11 +159,9 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         with torch.cuda.amp.autocast():
             logit_map = self.model(x)
             loss = self.loss(logit_map, y)
-        self.scaler.scale(loss).backward()
+        self.loss.backward()
         loss_value = loss.item()
-        self.scaler.unscale_(self.optimizer)
-        self.scaler.step(self.optimizer)
-        self.scaler.update()
+        self.optimizer.step()
         self.optimizer.zero_grad()
         del logit_map, loss, x, y
         gc.collect()
@@ -186,7 +186,13 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         """
         val_inputs, val_labels = (batch["image"].cuda(), batch["label"].cuda())
         with torch.cuda.amp.autocast():
-            val_outputs = sliding_window_inference(val_inputs, tuple([self.split_size]*3), 1, self.model)
+            val_outputs = sliding_window_inference(
+                val_inputs, 
+                tuple([self.split_size]*3), 
+                1, 
+                self.model,
+                overlap = self.overlap 
+            )
         val_labels_list = decollate_batch(val_labels)
         val_labels_convert = [
             self.post_label(val_label_tensor) for val_label_tensor in val_labels_list
@@ -246,6 +252,11 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             mean_dice_val = self.dice_metric.aggregate().item()
             current_metrics["validation_loss"] += mean_dice_val
             self.dice_metric.reset()
+        if self.scheduler and self.warmup:
+            with self.warmup.dampening():
+                self.scheduler.step()
+        elif self.scheduler:
+            self.scheduler.step()
         for key, value in current_metrics.items():
             self.history[key].append(value)
         return current_metrics

@@ -2,6 +2,7 @@ import torch
 from torch import cuda
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch_warmup import LinearWarmup
 
 from monai.losses import DiceCELoss
 from monai.networks.nets import SwinUNETR
@@ -20,7 +21,6 @@ def train(
     epochs = args.epochs
     patience = args.patience
     initial_learning_rate = args.initial_learning_rate
-    sched_step_after_train = args.sched_step_after_train
     model_name = args.model_name
     dump_path = args.dump_path
     log_path = args.log_path
@@ -29,6 +29,8 @@ def train(
     metadata_base_path = args.metadata_base_path
     patch_size = args.patch_size
     K = args.K
+    overlap = args.overlap
+    warmup_period = args.warmup_period
     # creating the data loader
     torch.backends.cudnn.benchmark = True
     train_transforms, val_transforms, test_transforms = get_monai_transformations(
@@ -59,6 +61,10 @@ def train(
             optimizer, 
             initial_learning_rate
         )
+        warmup = LinearWarmup(
+            optimizer, 
+            warmup_period
+        )
         train_data_loader, validation_data_loader = create_data_loaders_from_splits_metadata(
             split_to_train,
             metadata_base_path,
@@ -76,14 +82,15 @@ def train(
             loss_function,
             initial_learning_rate = initial_learning_rate,
             scheduler = scheduler,
+            warmup = warmup,
             epochs = epochs,
             patience = patience,
-            sched_step_after_train = sched_step_after_train,
-            model_name = model_name,
+            model_name = model_name + f"-split#{split_to_train}",
             dump_dir = dump_path,
             log_dir = log_path,
             optimizer_kwargs = None,
             scheduler_kwargs = None,
-            split_size = patch_size 
+            split_size = patch_size,
+            overlap = overlap
         )
-        #trainer.fit()
+        trainer.fit()

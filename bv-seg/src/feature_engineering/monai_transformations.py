@@ -15,7 +15,9 @@ from monai.transforms import (
     RandFlipd,
     RandCropByPosNegLabeld,
     RandShiftIntensityd,
+    RandScaleIntensityd,
     ScaleIntensityRanged,
+    NormalizeIntensityd,
     Spacingd,
     RandRotate90d,
     EnsureTyped,
@@ -29,14 +31,7 @@ def get_monai_transformations(
     train_transforms = Compose(
         [
             LoadImaged(keys=["image", "label"], ensure_channel_first = True),
-            ScaleIntensityRanged(
-                keys=["image"],
-                a_min=0,
-                a_max=2**16,
-                b_min=0.0,
-                b_max=1.0,
-                clip=True,
-            ),
+            NormalizeIntensityd(keys=["image"]),
             ScaleIntensityRanged(
                 keys=["label"],
                 a_min=0,
@@ -47,11 +42,6 @@ def get_monai_transformations(
             ),
             CropForegroundd(keys=["image", "label"], source_key="image", allow_smaller = False),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
-            Spacingd(
-                keys=["image", "label"],
-                pixdim=(1.0, 1.5, 2.0),
-                mode=("bilinear", "nearest"),
-            ),
             EnsureTyped(keys=["image", "label"], device=device, track_meta=False),
             RandCropByPosNegLabeld(
                 keys=["image", "label"],
@@ -75,32 +65,35 @@ def get_monai_transformations(
             RandFlipd(
                 keys=["image", "label"],
                 spatial_axis=[1],
-                prob=0.10,
+                prob=0.5,
             ),
             RandFlipd(
                 keys=["image", "label"],
                 spatial_axis=[2],
-                prob=0.10,
+                prob=0.5,
             ),
             RandRotate90d(
                 keys=["image", "label"],
-                prob=0.10,
+                prob=0.5,
                 max_k=3,
             ),
             RandShiftIntensityd(
                 keys=["image"],
-                offsets=0.10,
-                prob=0.50,
+                offsets=0.1,
+                prob=1.0,
             ),
+            RandScaleIntensityd(
+                keys=["image"],
+                offsets=0.1,
+                prob=1.0,
+            )
         ]
     )
 
     val_transforms = Compose(
         [
             LoadImaged(keys=["image", "label"], ensure_channel_first = True),
-            ScaleIntensityRanged(
-                keys=["image"], a_min=0, a_max=2**16, b_min=0.0, b_max=1.0, clip=True
-            ),
+            NormalizeIntensityd(keys=["image"]),
             ScaleIntensityRanged(
                 keys=["label"],
                 a_min=0,
@@ -111,11 +104,6 @@ def get_monai_transformations(
             ),
             CropForegroundd(keys=["image", "label"], source_key="image", allow_smaller = False),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
-            Spacingd(
-                keys=["image", "label"],
-                pixdim=(1.0, 1.5, 2.0),
-                mode=("bilinear", "nearest"),
-            ),
             EnsureTyped(keys=["image", "label"], device=device, track_meta=True),
         ]
     )
@@ -123,9 +111,7 @@ def get_monai_transformations(
     test_transforms = Compose(
         [
             LoadImaged(keys=["image"], ensure_channel_first = True), #channel_dim=None),
-            ScaleIntensityRanged(
-                keys=["image"], a_min=0, a_max=2**16, b_min=0.0, b_max=1.0, clip=True
-            ),
+            NormalizeIntensityd(keys=["image"]),
             CropForegroundd(keys=["image"], source_key="image", allow_smaller = False),
             Orientationd(keys=["image"], axcodes="RAS"),
             Spacingd(
