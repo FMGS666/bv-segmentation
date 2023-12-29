@@ -128,7 +128,7 @@ class BVSegTraining(object):
         self.gradient_clipping = gradient_clipping
         self.history = {
             "train_loss": [9e20],
-            "validation_loss": [9e20],
+            "validation_loss": [9e20 if self.decrease else 0.0],
         }
         self.n_epochs_with_no_progress = 0
         self.n_saved_models = 0
