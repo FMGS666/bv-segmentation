@@ -1,3 +1,5 @@
+import os
+
 import torch
 from torch import cuda
 from torch.optim import AdamW
@@ -25,7 +27,7 @@ def train(
     log_path = args.log_path
     relative_improvement = args.relative_improvement
     weight_decay = args.weight_decay
-    metadata_base_path = os.path.join(
+    splits_metadata_path = os.path.join(
         args.metadata_base_path,
         "individual_datasets"
     )
@@ -84,7 +86,7 @@ def train(
                     warmup = warmup,
                     epochs = epochs,
                     patience = patience,
-                    model_name = model_name + f"-split#{split_to_train}",
+                    model_name = model_name + f"-split#{split_to_train}-dataset#{dataset_id}",
                     dump_dir = dump_path,
                     log_dir = log_path,
                     optimizer_kwargs = None,
