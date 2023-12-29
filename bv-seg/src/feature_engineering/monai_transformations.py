@@ -84,7 +84,7 @@ def get_monai_transformations(
             ),
             RandScaleIntensityd(
                 keys=["image"],
-                offsets=0.1,
+                factors=0.1,
                 prob=1.0,
             )
         ]

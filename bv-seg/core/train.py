@@ -2,7 +2,7 @@ import torch
 from torch import cuda
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from torch_warmup import LinearWarmup
+from pytorch_warmup import LinearWarmup
 
 from monai.losses import DiceCELoss
 from monai.networks.nets import SwinUNETR

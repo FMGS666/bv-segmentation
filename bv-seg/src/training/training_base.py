@@ -27,6 +27,7 @@ from typing import Iterable, Callable, Any
 from torch import nn, Tensor
 from torch.optim.lr_scheduler import LRScheduler 
 from torch.optim import Optimizer
+from pytorch_warmup import BaseWarmup
 
 class BVSegTraining(object):
     def __init__(
