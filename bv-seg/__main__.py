@@ -9,10 +9,12 @@ import sys
 from .core.argument_parser import BVSegArgumentParser
 from .core.sample import sample
 from .core.train import train
+from .core.train_old import train as train_old
 
 supported_commands = [
     "sample",
-    "train"
+    "train",
+    "train-old"
 ]
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -30,6 +32,11 @@ if __name__ == "__main__":
         )
     if args.command == "train":
         train(
+            args,
+            device
+        )
+    if args.command == "train-old":
+        train_old(
             args,
             device
         )
