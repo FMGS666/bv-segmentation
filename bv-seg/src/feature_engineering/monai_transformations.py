@@ -105,6 +105,20 @@ def get_monai_transformations(
             CropForegroundd(keys=["image", "label"], source_key="image", allow_smaller = False),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
             EnsureTyped(keys=["image", "label"], device=device, track_meta=True),
+            RandCropByPosNegLabeld(
+                keys=["image", "label"],
+                label_key="label",
+                spatial_size=(
+                    spatial_size, 
+                    spatial_size, 
+                    spatial_size
+                ),
+                pos=1,
+                neg=1,
+                num_samples=1,
+                image_key="image",
+                image_threshold=0,
+            ),
         ]
     )
 

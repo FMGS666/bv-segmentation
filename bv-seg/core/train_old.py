@@ -4,6 +4,7 @@ import torch
 from torch import cuda
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
+from pytorch_warmup import LinearWarmup
 
 from monai.losses import DiceCELoss
 from monai.networks.nets import SwinUNETR
@@ -64,6 +65,10 @@ def train(
         scheduler = CosineAnnealingLR(
             optimizer, 
             initial_learning_rate
+        )
+        warmup = LinearWarmup(
+            optimizer, 
+            warmup_period
         )
         splits_data_loaders = create_data_loaders_from_splits_metadata(
             splits_metadata_path,
