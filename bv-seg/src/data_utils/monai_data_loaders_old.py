@@ -32,21 +32,22 @@ def create_data_loaders_from_splits_metadata(
         )
         splits = os.listdir(dataset_path)
         for split_id, split in enumerate(splits):
-            if split_id == split_to_train:
-                split_metadata_path = os.path.join(
-                    dataset_path, 
-                    split
-                )
-                print(f"{dataset_name=}, {split_id=} {split_metadata_path=}")
-                train_files = load_decathlon_datalist(split_metadata_path, True, "training", base_dir = "./")
-                train_ds = CacheDataset(
-                    data=train_files, transform=train_transforms, cache_num=24, cache_rate=1.0, num_workers=2
-                )
-                train_loader = ThreadDataLoader(train_ds, num_workers=0, batch_size=1, shuffle=True)
+            if split_id != split_to_train:
+                continue
+            split_metadata_path = os.path.join(
+                dataset_path, 
+                split
+            )
+            print(f"{dataset_name=}, {split_id=} {split_metadata_path=}")
+            train_files = load_decathlon_datalist(split_metadata_path, True, "training", base_dir = "./")
+            train_ds = CacheDataset(
+                data=train_files, transform=train_transforms, cache_num=24, cache_rate=1.0, num_workers=2
+            )
+            train_loader = ThreadDataLoader(train_ds, num_workers=0, batch_size=1, shuffle=True)
 
-                val_files = load_decathlon_datalist(split_metadata_path, True, "validation", base_dir = "./")
-                val_ds = CacheDataset(
-                    data=val_files, transform=val_transforms, cache_num=6, cache_rate=1.0, num_workers=2
-                )
-                val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=validation_batch_size)
-                yield dataset_id, split_id, train_loader, val_loader
+            val_files = load_decathlon_datalist(split_metadata_path, True, "validation", base_dir = "./")
+            val_ds = CacheDataset(
+                data=val_files, transform=val_transforms, cache_num=6, cache_rate=1.0, num_workers=2
+            )
+            val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=validation_batch_size)
+            yield dataset_id, split_id, train_loader, val_loader
