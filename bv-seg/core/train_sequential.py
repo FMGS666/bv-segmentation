@@ -10,7 +10,7 @@ from monai.losses import DiceCELoss
 from monai.networks.nets import SwinUNETR
 
 from ..src.training.training_swin_unetr import BVSegSwinUnetRTraining
-from ..src.data_utils.monai_data_loaders_old import create_data_loaders_from_splits_metadata
+from ..src.data_utils.monai_data_loaders_sequential import create_data_loaders_from_splits_metadata
 from ..src.feature_engineering.monai_transformations import get_monai_transformations
 
 
@@ -45,6 +45,8 @@ def train(
     )
     # train a model for each split
     for split_to_train in range(K):
+        print(f"Training on split {split_to_train}/{K}")
+        print(f"Initializing model")
         model = SwinUNETR(
             img_size=(
                 patch_size, 
@@ -56,15 +58,21 @@ def train(
             feature_size=48,
             use_checkpoint=True,
         ).to(device)
+        print("Model initialized")
         if load_pre_trained:
+            print("Loading pre-trained weights")
             weight = torch.load("models/pretrained/model_swinvit.pt")
             model.load_from(weights=weight)
             model.to(device)
+            print("Pre trained weights loaded")
         if data_parallel:
+            print("Parallelizing model over multiple GPUs")
             model = torch.nn.DataParallel(
                 model
             )
             model.to(device)
+            print("Model parallelized")
+        print("Defining optimization modules")
         optimizer = AdamW(
             model.parameters(),
             lr = initial_learning_rate, 
@@ -78,6 +86,9 @@ def train(
             optimizer, 
             warmup_period
         )
+        loss_function = DiceCELoss(sigmoid = True)
+        print("Optimization modules defined")
+        print("Creating data loaders for current splits")
         splits_data_loaders = create_data_loaders_from_splits_metadata(
             split_to_train,
             splits_metadata_path,
@@ -86,15 +97,17 @@ def train(
             train_batch_size = train_batch_size,
             validation_batch_size = validation_batch_size
         )
-        loss_function = DiceCELoss(sigmoid = True)
         for (dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
+            print(f"Currently retrieving {dataset_id=}, {split_id=}")
             if split_id == split_to_train:
+                print(f"Initiating training on {dataset_id=},  {split_id=} ({split_to_train=})")
                 trainer = BVSegSwinUnetRTraining(
                     model,
                     train_data_loader,
                     validation_data_loader,
                     optimizer,
                     loss_function,
+                    device,
                     initial_learning_rate = initial_learning_rate,
                     scheduler = scheduler,
                     warmup = warmup,

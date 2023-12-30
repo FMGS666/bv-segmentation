@@ -44,7 +44,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             val_data_loader: Iterable, 
             optimizer: Optimizer,
             loss: nn.Module,
-            device: Any = "cuda",
+            device: Any,
             distributed_data_parallel: bool = False,
             initial_learning_rate: float | None = None,
             scheduler: LRScheduler | None = None, 
@@ -113,7 +113,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             val_data_loader, 
             optimizer,
             loss,
-            device = device,
+            device,
             initial_learning_rate= initial_learning_rate,
             scheduler = scheduler,
             warmup = warmup, 
@@ -171,8 +171,6 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         del logit_map, loss, x, y
         gc.collect()
         cuda.empty_cache()
-        if self.distributed_data_parallel:           
-            dist.destroy_process_group()
         return loss_value
     
     @profile
@@ -260,8 +258,6 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             mean_dice_val = self.dice_metric.aggregate().item()
             current_metrics["validation_loss"] += mean_dice_val
             self.dice_metric.reset()
-            if self.distributed_data_parallel:           
-                dist.destroy_process_group()
         if self.scheduler and self.warmup:
             with self.warmup.dampening():
                 self.scheduler.step()
@@ -269,5 +265,6 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             self.scheduler.step()
         for key, value in current_metrics.items():
             self.history[key].append(value)
+        print(f"{epoch=}: {current_metrics=}")
         return current_metrics
     

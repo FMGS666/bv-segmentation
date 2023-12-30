@@ -204,7 +204,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             action = "store_true"
         )
         self.add_argument(
-            '-dp', 
+            '-ddp', 
             '--data-parallel',
             action = "store_true"
         )

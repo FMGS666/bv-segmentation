@@ -8,16 +8,16 @@ import sys
 
 from .core.argument_parser import BVSegArgumentParser
 from .core.sample import sample
-from .core.train import train
-from .core.train_old import train as train_old
+from .core.train_merged import train as train_merged
+from .core.train_sequential import train as train_sequential
 
 supported_commands = [
     "sample",
-    "train",
-    "train-old"
+    "train-merged",
+    "train-sequential"
 ]
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
     # defining arguments parser
@@ -30,13 +30,13 @@ if __name__ == "__main__":
         sample(
             args
         )
-    if args.command == "train":
-        train(
+    if args.command == "train-merged":
+        train_merged(
             args,
             device
         )
-    if args.command == "train-old":
-        train_old(
+    if args.command == "train-sequential":
+        train_sequential(
             args,
             device
         )

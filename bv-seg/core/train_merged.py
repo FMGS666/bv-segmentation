@@ -8,7 +8,7 @@ from monai.losses import DiceCELoss
 from monai.networks.nets import SwinUNETR
 
 from ..src.training.training_swin_unetr import BVSegSwinUnetRTraining
-from ..src.data_utils.monai_data_loaders import create_data_loaders_from_splits_metadata
+from ..src.data_utils.monai_data_loaders_merged import create_data_loaders_from_splits_metadata
 from ..src.feature_engineering.monai_transformations import get_monai_transformations
 
 
@@ -54,6 +54,11 @@ def train(
             weight = torch.load("models/pretrained/model_swinvit.pt")
             model.load_from(weights=weight)
             model.to(device)
+        if data_parallel:
+            model = torch.nn.DataParallel(
+                model
+            )
+            model.to(device)
         optimizer = AdamW(
             model.parameters(),
             lr = initial_learning_rate, 
@@ -82,6 +87,7 @@ def train(
             validation_data_loader,
             optimizer,
             loss_function,
+            device,
             initial_learning_rate = initial_learning_rate,
             scheduler = scheduler,
             warmup = warmup,

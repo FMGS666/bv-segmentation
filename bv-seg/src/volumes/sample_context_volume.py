@@ -6,6 +6,7 @@ import nibabel as nib
 import os
 import gc
 
+from import tqdm
 from typing import Iterable
 from ..file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
 from ..file_loaders.tif_file_loader import TifFileLoader
@@ -57,7 +58,7 @@ def sample_random_window_context(
         n_samples,
         subsample
     )
-    for (l_slice_id, u_slice_id) in context_window_indexes:
+    for (l_slice_id, u_slice_id) in tqdm(context_window_indexes):
         volumes = []
         context_window_paths = iterable_to_sample[l_slice_id: u_slice_id] if subsample\
             else iterable_to_sample

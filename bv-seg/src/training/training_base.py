@@ -37,7 +37,7 @@ class BVSegTraining(object):
             val_data_loader: Iterable, 
             optimizer: Optimizer,
             loss: nn.Module,
-            device: Any = "cuda",
+            device: Any,
             initial_learning_rate: float | None = None,
             scheduler: LRScheduler | None = None, 
             warmup: BaseWarmup | None = None,
@@ -386,4 +386,5 @@ class BVSegTraining(object):
                 if self.n_epochs_with_no_progress > self.patience:
                     print(f"patience reached, quitting the training")
                     break
-        return min(self.history["validation_loss"])
+        return min(self.history["validation_loss"]) if self.decrease \
+            else max(self.history["validation_loss"])

@@ -16,6 +16,7 @@ def write_volumes_to_tif(
     ) -> None:
     for dataset_name, split_groups in train_splits_groups.items():
         for split_id, split in split_groups.items():
+            print(f"Writing volumes of {dataset_name} dataset, {split_id=}")
             sample_random_window_context(
                 dataset_name,
                 split_id,
