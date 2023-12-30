@@ -44,6 +44,8 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             val_data_loader: Iterable, 
             optimizer: Optimizer,
             loss: nn.Module,
+            device: Any = "cuda",
+            distributed_data_parallel: bool = False,
             initial_learning_rate: float | None = None,
             scheduler: LRScheduler | None = None, 
             warmup: BaseWarmup | None = None,
@@ -111,6 +113,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             val_data_loader, 
             optimizer,
             loss,
+            device = device,
             initial_learning_rate= initial_learning_rate,
             scheduler = scheduler,
             warmup = warmup, 
@@ -155,7 +158,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         
         Performs a forward and a backward pass on a training batch and returns the obtained training loss.
         """
-        x, y = (batch["image"].cuda(), batch["label"].cuda())
+        x, y = (batch["image"].to(self.device), batch["label"].to(self.device))
         with torch.cuda.amp.autocast():
             logit_map = self.model(x)
             loss = self.loss(logit_map, y)
@@ -168,6 +171,8 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         del logit_map, loss, x, y
         gc.collect()
         cuda.empty_cache()
+        if self.distributed_data_parallel:           
+            dist.destroy_process_group()
         return loss_value
     
     @profile
@@ -186,7 +191,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         
         Performs a forward on a validation batch and returns the obtained validation loss.
         """
-        val_inputs, val_labels = (batch["image"].cuda(), batch["label"].cuda())
+        val_inputs, val_labels = (batch["image"].to(self.device), batch["label"].to(self.device))
         with torch.cuda.amp.autocast():
             val_outputs = sliding_window_inference(
                 val_inputs, 
@@ -235,6 +240,7 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             self.val_data_loader, desc="Validate (X / X Steps) (dice=X.X)", dynamic_ncols=True
         )
         print("Performing training pass")
+        self.optimizer.zero_grad()
         for idx, batch in enumerate(epoch_iterator):
             train_loss = self.training_pass(batch)
             epoch_iterator.set_description(
@@ -254,6 +260,8 @@ class BVSegSwinUnetRTraining(BVSegTraining):
             mean_dice_val = self.dice_metric.aggregate().item()
             current_metrics["validation_loss"] += mean_dice_val
             self.dice_metric.reset()
+            if self.distributed_data_parallel:           
+                dist.destroy_process_group()
         if self.scheduler and self.warmup:
             with self.warmup.dampening():
                 self.scheduler.step()

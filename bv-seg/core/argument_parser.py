@@ -203,3 +203,8 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             '--load-pre-trained',
             action = "store_true"
         )
+        self.add_argument(
+            '-dp', 
+            '--data-parallel',
+            action = "store_true"
+        )

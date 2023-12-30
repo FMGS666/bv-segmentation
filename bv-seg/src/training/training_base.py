@@ -37,6 +37,7 @@ class BVSegTraining(object):
             val_data_loader: Iterable, 
             optimizer: Optimizer,
             loss: nn.Module,
+            device: Any = "cuda",
             initial_learning_rate: float | None = None,
             scheduler: LRScheduler | None = None, 
             warmup: BaseWarmup | None = None,
@@ -142,7 +143,7 @@ class BVSegTraining(object):
             os.mkdir(self.log_dir)
         except FileExistsError:
             pass
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
         self.save_settings()
 
     @property
