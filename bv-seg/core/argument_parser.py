@@ -198,4 +198,8 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             required = False,
             default = 50
         )
-        
+        self.add_argument(
+            '-lpt', 
+            '--load-pre-trained',
+            action = "store_true"
+        )

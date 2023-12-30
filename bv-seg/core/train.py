@@ -31,6 +31,7 @@ def train(
     K = args.K
     overlap = args.overlap
     warmup_period = args.warmup_period
+    load_pre_trained = args.load_pre_trained
     # creating the data loader
     torch.backends.cudnn.benchmark = True
     train_transforms, val_transforms, test_transforms = get_monai_transformations(
@@ -49,9 +50,10 @@ def train(
             feature_size=48,
             use_checkpoint=True,
         ).to(device)
-        weight = torch.load("models/pretrained/model_swinvit.pt")
-        model.load_from(weights=weight)
-        model.to(device)
+        if load_pre_trained:
+            weight = torch.load("models/pretrained/model_swinvit.pt")
+            model.load_from(weights=weight)
+            model.to(device)
         optimizer = AdamW(
             model.parameters(),
             lr = initial_learning_rate, 

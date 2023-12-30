@@ -129,6 +129,9 @@ class BVSegTraining(object):
             "train_loss": [9e20],
             "validation_loss": [9e20 if self.decrease else 0.0],
         }
+        self.lr_history = {
+            idx: [] for idx, _ in enumerate(self.optimizer.param_groups)
+        }
         self.n_epochs_with_no_progress = 0
         self.n_saved_models = 0
         self.log_dir = log_dir
@@ -218,6 +221,9 @@ class BVSegTraining(object):
         dump_file = os.path.join(dump_dir, "losses.json")
         with open(dump_file, "w") as log_file:
             json.dump(self.history, log_file)
+        dump_file = os.path.join(dump_dir, "lr_history.json")
+        with open(dump_file, "w") as log_file:
+            json.dump(self.lr_history, log_file)
 
     def plot_history(
             self,
@@ -363,6 +369,10 @@ class BVSegTraining(object):
         for epoch in range(self.epochs):
             print(f"epoch: {epoch + 1}/{self.epochs}")
             current_metrics = self.epoch(epoch)
+            for idx, param_group in enumerate(self.optimizer.param_groups):
+                self.lr_history[idx].append(
+                    param_group['lr']
+                )
             self.dump_logs(epoch)
             if self.track_validation_progress():
                 print("Validation loss decreasing, saving the model")
