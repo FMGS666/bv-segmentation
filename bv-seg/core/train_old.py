@@ -66,7 +66,7 @@ def train(
         )
         scheduler = CosineAnnealingLR(
             optimizer, 
-            initial_learning_rate
+            epochs
         )
         warmup = LinearWarmup(
             optimizer, 
