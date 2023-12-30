@@ -258,7 +258,8 @@ class BVSegTraining(object):
         Returns: 
             * `bool` -> whether the validation loss has improved in the last epoch
         """
-        current_best_loss = min(self.history["validation_loss"][:-1])
+        current_best_loss = min(self.history["validation_loss"][:-1]) if self.decrease \
+            else max(self.history["validation_loss"][:-1])
         current_loss = self.history["validation_loss"][-1]
         if self.relative_improvement:
             return (current_best_loss - current_loss) / current_best_loss > self.tollerance if self.decrease \

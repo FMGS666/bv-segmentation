@@ -54,8 +54,8 @@ def train(
             feature_size=48,
             use_checkpoint=True,
         ).to(device)
-        weight = torch.load("models/pretrained/model_swinvit.pt")
-        model.load_from(weights=weight)
+        #weight = torch.load("models/pretrained/model_swinvit.pt")
+        #model.load_from(weights=weight)
         model.to(device)
         optimizer = AdamW(
             model.parameters(),
@@ -71,6 +71,7 @@ def train(
             warmup_period
         )
         splits_data_loaders = create_data_loaders_from_splits_metadata(
+            split_to_train,
             splits_metadata_path,
             train_transforms,
             val_transforms,
@@ -79,24 +80,23 @@ def train(
         )
         loss_function = DiceCELoss(sigmoid = True)
         for (dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
-            if split_id == split_to_train:
-                trainer = BVSegSwinUnetRTraining(
-                    model,
-                    train_data_loader,
-                    validation_data_loader,
-                    optimizer,
-                    loss_function,
-                    initial_learning_rate = initial_learning_rate,
-                    scheduler = scheduler,
-                    warmup = warmup,
-                    epochs = epochs,
-                    patience = patience,
-                    model_name = model_name + f"-split#{split_to_train}-dataset#{dataset_id}",
-                    dump_dir = dump_path,
-                    log_dir = log_path,
-                    optimizer_kwargs = None,
-                    scheduler_kwargs = None,
-                    split_size = patch_size,
-                    overlap = overlap
-                )
-                trainer.fit()       
+            trainer = BVSegSwinUnetRTraining(
+                model,
+                train_data_loader,
+                validation_data_loader,
+                optimizer,
+                loss_function,
+                initial_learning_rate = initial_learning_rate,
+                scheduler = scheduler,
+                warmup = warmup,
+                epochs = epochs,
+                patience = patience,
+                model_name = model_name + f"-split#{split_to_train}-dataset#{dataset_id}",
+                dump_dir = dump_path,
+                log_dir = log_path,
+                optimizer_kwargs = None,
+                scheduler_kwargs = None,
+                split_size = patch_size,
+                overlap = overlap
+            )
+            #trainer.fit()       

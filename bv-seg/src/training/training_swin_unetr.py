@@ -159,9 +159,11 @@ class BVSegSwinUnetRTraining(BVSegTraining):
         with torch.cuda.amp.autocast():
             logit_map = self.model(x)
             loss = self.loss(logit_map, y)
-        loss.backward()
+        self.scaler.scale(loss).backward()
         loss_value = loss.item()
-        self.optimizer.step()
+        self.scaler.unscale_(self.optimizer)
+        self.scaler.step(self.optimizer)
+        self.scaler.update()
         self.optimizer.zero_grad()
         del logit_map, loss, x, y
         gc.collect()
