@@ -6,7 +6,7 @@ import nibabel as nib
 import os
 import gc
 
-from import tqdm
+from tqdm import tqdm
 from typing import Iterable
 from ..file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
 from ..file_loaders.tif_file_loader import TifFileLoader
