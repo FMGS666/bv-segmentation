@@ -16,7 +16,8 @@ from ..src.feature_engineering.monai_transformations import get_monai_transforma
 
 def train(
         args,
-        device
+        device,
+        datasets
     ) -> None:
     train_batch_size = args.train_batch_size
     validation_batch_size = args.validation_batch_size
@@ -38,6 +39,12 @@ def train(
     overlap = args.overlap
     warmup_period = args.warmup_period
     data_parallel = args.data_parallel
+    skip = args.skip
+    feature_size = args.feature_size
+    # validating the arguments
+    for ds_skip in skip:
+        if ds_skip not in datasets:
+            UserWarning(f"Dataset to skip {ds_skip} not in available datasets {datasets}, maybe you shold check your spelling")
     # creating the data loader
     torch.backends.cudnn.benchmark = True
     train_transforms, val_transforms, test_transforms = get_monai_transformations(
@@ -55,7 +62,7 @@ def train(
             ),
             in_channels=1,
             out_channels=1,
-            feature_size=48,
+            feature_size=feature_size,
             use_checkpoint=True,
         ).to(device)
         print("Model initialized")
@@ -70,7 +77,7 @@ def train(
             model = torch.nn.DataParallel(
                 model
             )
-            model.to(device)
+            #model.to(device)
             print("Model parallelized")
         print("Defining optimization modules")
         optimizer = AdamW(
@@ -95,12 +102,13 @@ def train(
             train_transforms,
             val_transforms,
             train_batch_size = train_batch_size,
-            validation_batch_size = validation_batch_size
+            validation_batch_size = validation_batch_size,
+            skip = skip
         )
-        for (dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
-            print(f"Currently retrieving {dataset_id=}, {split_id=}")
+        for (dataset_name, dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
+            print(f"Currently retrieving {dataset_name} ({dataset_id=}), {split_id=}")
             if split_id == split_to_train:
-                print(f"Initiating training on {dataset_id=},  {split_id=} ({split_to_train=})")
+                print(f"Initiating training on {dataset_name} ({dataset_id=}), {split_id=} ({split_to_train=})")
                 trainer = BVSegSwinUnetRTraining(
                     model,
                     train_data_loader,
@@ -121,4 +129,5 @@ def train(
                     split_size = patch_size,
                     overlap = overlap
                 )
-                trainer.fit()       
+                trainer.fit()
+                torch.cuda.empty_cache()      

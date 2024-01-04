@@ -6,7 +6,7 @@ from ..src.model_selection.utils import retrieve_filenames_from_split_indexes, r
 from ..src.data_utils.utils import get_volumes_fold_splits, get_datasets_from_data_path, dump_dataset_metadata
 from ..src.volumes.write_volumes import write_volumes_to_tif
 
-def sample(
+def write_volumes(
         args: dict
     ) -> None:
     train_data_path = args.train_data_path

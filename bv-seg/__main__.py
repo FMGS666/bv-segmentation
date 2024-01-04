@@ -7,14 +7,22 @@ import torch
 import sys
 
 from .core.argument_parser import BVSegArgumentParser
-from .core.sample import sample
+from .core.write_volumes import write_volumes
 from .core.train_merged import train as train_merged
 from .core.train_sequential import train as train_sequential
 
 supported_commands = [
-    "sample",
+    "write-volumes",
     "train-merged",
     "train-sequential"
+]
+
+datasets = [
+    "kidney_1_dense",
+    "kidney_1_voi",
+    "kidney_2",
+    "kidney_3_dense",
+    "kidney_3_sparse"
 ]
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -26,8 +34,8 @@ if __name__ == "__main__":
     )        
     args = arg_parser.parse_args()
     print(f"{args=}")
-    if args.command == "sample":
-        sample(
+    if args.command == "write-volumes":
+        write_volumes(
             args
         )
     if args.command == "train-merged":
@@ -38,6 +46,7 @@ if __name__ == "__main__":
     if args.command == "train-sequential":
         train_sequential(
             args,
-            device
+            device,
+            datasets
         )
     

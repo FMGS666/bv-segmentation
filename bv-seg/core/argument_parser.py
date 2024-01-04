@@ -78,20 +78,20 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             '-ns', 
             '--n-samples',
             type = int,
-            help = "The number of 3D volumes to sample for each split",
+            help = "The number of 3D volumes to sampleTifd for each split",
             required = False,
             default = 1
         )
         self.add_argument(
             '-sb', 
             '--subsample',
-            help = "Whether to take full slices for creating volumes",
+            help = "Whether to subsample the full slices for creating volumes",
             action = "store_true"
         ) 
         self.add_argument(
             '-vp', 
             '--volumes-path',
-            help = "The path to the 3D volumes Tif files",
+            help = "The path to the 3D volumes NIFTI files",
             type = str,
             required = False,
             default = "./data/splits_sampled_volumes"
@@ -201,10 +201,25 @@ class BVSegArgumentParser(argparse.ArgumentParser):
         self.add_argument(
             '-lpt', 
             '--load-pre-trained',
+            help = "Whether to load pre-trained weights",
             action = "store_true"
         )
         self.add_argument(
             '-ddp', 
             '--data-parallel',
+            help = "Whether to train using multiple GPUs (single machine)",
             action = "store_true"
+        )
+        self.add_argument(
+            '-s',
+            '--skip',
+            help = "List of datasets to skip",
+            nargs = '+'
+        )
+        self.add_argument(
+            '-f',
+            '--feature-size',
+            help = "The feature size for the SwinUnetR model",
+            type = int,
+            default = 48
         )

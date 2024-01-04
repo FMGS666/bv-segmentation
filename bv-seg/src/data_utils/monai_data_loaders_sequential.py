@@ -6,6 +6,7 @@ import os
 from monai.data import (
     ThreadDataLoader,
     CacheDataset,
+    Dataset,
     set_track_meta,
     load_decathlon_datalist
 )
@@ -18,6 +19,7 @@ def create_data_loaders_from_splits_metadata(
         val_transforms,
         train_batch_size = 1,
         validation_batch_size = 1,
+        skip = None,
     ) -> dict[str, dict[int, dict[str, ThreadDataLoader]]]:
     """
     
@@ -25,6 +27,8 @@ def create_data_loaders_from_splits_metadata(
     result_dictionary = dict()
     dataset_names = os.listdir(splits_metadata_path)
     for dataset_id, dataset_name in enumerate(dataset_names):
+        if skip and dataset_name in skip:
+            continue
         if dataset_name in ["kidney_1_voi"]:
             cache_num = 1
         else:
@@ -50,8 +54,11 @@ def create_data_loaders_from_splits_metadata(
             train_loader = ThreadDataLoader(train_ds, num_workers=0, batch_size=1, shuffle=True)
 
             val_files = load_decathlon_datalist(split_metadata_path, True, "validation", base_dir = "./")
-            val_ds = CacheDataset(
-                data=val_files, transform=val_transforms, cache_num=1, cache_rate=1.0, num_workers=2
-            )
+            if dataset_name in ["kidney_1_voi", "kidney_2"]:
+                val_ds = Dataset(data=val_files, transform=val_transforms)
+            else:
+                val_ds = CacheDataset(
+                    data=val_files, transform=val_transforms, cache_num=1, cache_rate=1.0, num_workers=2
+                ) 
             val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=validation_batch_size)
-            yield dataset_id, split_id, train_loader, val_loader
+            yield dataset_name, dataset_id, split_id, train_loader, val_loader
