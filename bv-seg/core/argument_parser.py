@@ -223,3 +223,15 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             type = int,
             default = 48
         )
+        self.add_argument(
+            '-ptp',
+            '--paths-to-predictors',
+            help = "List of paths which to load the predictors from",
+            nargs = '+'
+        )
+        self.add_argument(
+            '-wtv', 
+            '--write-test-volumes',
+            help = "Whether to write test volumes during prediction",
+            action = "store_true"
+        )

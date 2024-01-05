@@ -10,11 +10,13 @@ from .core.argument_parser import BVSegArgumentParser
 from .core.write_volumes import write_volumes
 from .core.train_merged import train as train_merged
 from .core.train_sequential import train as train_sequential
+from .core.predict import predict
 
 supported_commands = [
     "write-volumes",
     "train-merged",
-    "train-sequential"
+    "train-sequential",
+    "predict"
 ]
 
 datasets = [
@@ -48,5 +50,10 @@ if __name__ == "__main__":
             args,
             device,
             datasets
+        )
+    if args.command == "predict":
+        predict(
+            args,
+            device,
         )
     

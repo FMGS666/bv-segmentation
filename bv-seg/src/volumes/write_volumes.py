@@ -24,5 +24,6 @@ def write_volumes_to_tif(
                 context_length = context_length,
                 n_samples = n_samples,
                 subsample = subsample,
-                train = train
+                train = train,
+                dump_folder = dump_folder
             )

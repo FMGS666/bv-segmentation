@@ -12,6 +12,9 @@ from monai.transforms import (
     CropForegroundd,
     LoadImaged,
     Orientationd,
+    GridPatchd,
+    Padd,
+    Pad,
     RandFlipd,
     RandCropByPosNegLabeld,
     RandShiftIntensityd,
@@ -117,14 +120,33 @@ def get_monai_transformations(
             )
         ]
     )
-
+    test_padder = Pad(
+        to_pad = [
+            (0, 0),
+            (62, 63), 
+            (0, 0), 
+            (0, 0)
+        ]
+    )
     test_transforms = Compose(
         [
-            LoadImaged(keys=["image"], ensure_channel_first = True), #channel_dim=None),
+            LoadImaged(keys=["image"], ensure_channel_first = True), 
             NormalizeIntensityd(keys=["image"]),
-            CropForegroundd(keys=["image"], source_key="image", allow_smaller = False),
             Orientationd(keys=["image"], axcodes="RAS"),
             EnsureTyped(keys=["image"], device=device, track_meta=True),
+            Padd(
+                keys="image",
+                padder = test_padder
+            ),
+            GridPatchd(
+                keys=["image"],
+                patch_size=(
+                    spatial_size, 
+                    spatial_size, 
+                    spatial_size
+                ),
+                pad_mode="constant"
+            )
         ]
     )
     return train_transforms, val_transforms, test_transforms
