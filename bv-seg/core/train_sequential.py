@@ -41,10 +41,6 @@ def train(
     data_parallel = args.data_parallel
     skip = args.skip
     feature_size = args.feature_size
-    # validating the arguments
-    for ds_skip in skip:
-        if ds_skip not in datasets:
-            UserWarning(f"Dataset to skip {ds_skip} not in available datasets {datasets}, maybe you shold check your spelling")
     # creating the data loader
     torch.backends.cudnn.benchmark = True
     train_transforms, val_transforms, test_transforms = get_monai_transformations(

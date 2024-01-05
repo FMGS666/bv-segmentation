@@ -2,6 +2,7 @@ import os
 import gc
 import torch
 
+from collections import defaultdict
 from monai.networks.nets import SwinUNETR
 from monai.data import Dataset, CacheDataset, ThreadDataLoader, load_decathlon_datalist
 
@@ -119,7 +120,7 @@ def predict(
         patch_size,
         device
     )
-    models_predictions = []
+    models_predictions = defaultdict(list)
     for weight in weights:
         model = SwinUNETR(
             img_size=(
@@ -157,5 +158,5 @@ def predict(
                     del x, logit_map
                     gc.collect()
                     torch.cuda.empty_cache()
-                    predictions["dataset_name"] = logit_map
-        models_predictions.append(predictions)
+                    models_predictions[dataset_name].append(logit_map)
+    
