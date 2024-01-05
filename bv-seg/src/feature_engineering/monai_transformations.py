@@ -24,10 +24,9 @@ from monai.transforms import (
 )
 
 def get_monai_transformations(
-        spatial_size: int,
+        spatial_size,
+        device
     ):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
     train_transforms = Compose(
         [
             LoadImaged(keys=["image", "label"], ensure_channel_first = True),

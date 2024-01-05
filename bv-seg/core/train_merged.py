@@ -35,7 +35,8 @@ def train(
     # creating the data loader
     torch.backends.cudnn.benchmark = True
     train_transforms, val_transforms, test_transforms = get_monai_transformations(
-        patch_size
+        patch_size,
+        device
     )
     # train a model for each split
     for split_to_train in range(K):

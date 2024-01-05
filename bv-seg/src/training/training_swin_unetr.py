@@ -196,7 +196,8 @@ class BVSegSwinUnetRTraining(BVSegTraining):
                 tuple([self.split_size]*3), 
                 1, 
                 self.model,
-                overlap = self.overlap 
+                overlap = self.overlap,
+                progress = True 
             )
         val_labels_list = decollate_batch(val_labels)
         val_labels_convert = [
