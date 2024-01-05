@@ -36,6 +36,14 @@ def get_monai_transformations(
             NormalizeIntensityd(keys=["image"]),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
             EnsureTyped(keys=["image", "label"], device=device, track_meta=False),
+            ScaleIntensityRanged(
+                keys=["label"],
+                a_min=0,
+                a_max=255,
+                b_min=0.0,
+                b_max=1.0,
+                clip=True,
+            ),
             RandCropByPosNegLabeld(
                 keys=["image", "label"],
                 label_key="label",
