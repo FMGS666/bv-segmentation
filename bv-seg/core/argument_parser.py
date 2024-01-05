@@ -131,6 +131,14 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             default = 8e-4
         )
         self.add_argument(
+            '-wd', 
+            '--weight-decay',
+            type = float,
+            help = "The weight decay for the optimizer",
+            required = False,
+            default = 1e-5
+        )
+        self.add_argument(
             '-ri', 
             '--relative-improvement',
             help = "Whether to use relative improvement as stopping criterion",

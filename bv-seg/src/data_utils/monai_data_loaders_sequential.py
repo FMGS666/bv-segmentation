@@ -2,6 +2,7 @@ f"""
 
 """
 import os
+import gc
 
 from monai.data import (
     ThreadDataLoader,
@@ -29,7 +30,7 @@ def create_data_loaders_from_splits_metadata(
     for dataset_id, dataset_name in enumerate(dataset_names):
         if skip and dataset_name in skip:
             continue
-        if dataset_name in ["kidney_1_voi"]:
+        if dataset_name in ["kidney_1_voi", "kidney_2"]:
             cache_num = 1
         else:
             cache_num = 2
@@ -54,11 +55,14 @@ def create_data_loaders_from_splits_metadata(
             train_loader = ThreadDataLoader(train_ds, num_workers=0, batch_size=1, shuffle=True)
 
             val_files = load_decathlon_datalist(split_metadata_path, True, "validation", base_dir = "./")
-            if dataset_name in ["kidney_1_voi", "kidney_2"]:
+            if dataset_name in []:
                 val_ds = Dataset(data=val_files, transform=val_transforms)
             else:
                 val_ds = CacheDataset(
                     data=val_files, transform=val_transforms, cache_num=1, cache_rate=1.0, num_workers=2
                 ) 
             val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=validation_batch_size)
+            del train_ds, val_ds
+            gc.collect()
+            torch.cuda.empty_cache()
             yield dataset_name, dataset_id, split_id, train_loader, val_loader

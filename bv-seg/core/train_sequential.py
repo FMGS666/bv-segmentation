@@ -6,6 +6,7 @@ from torch import cuda
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from pytorch_warmup import LinearWarmup
+from pytorch_memlab import profile
 
 from monai.losses import DiceCELoss
 from monai.networks.nets import SwinUNETR
@@ -14,7 +15,7 @@ from ..src.training.training_swin_unetr import BVSegSwinUnetRTraining
 from ..src.data_utils.monai_data_loaders_sequential import create_data_loaders_from_splits_metadata
 from ..src.feature_engineering.monai_transformations import get_monai_transformations
 
-
+@profile
 def train(
         args,
         device,
