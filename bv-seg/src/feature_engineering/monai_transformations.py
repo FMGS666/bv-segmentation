@@ -105,9 +105,9 @@ def get_monai_transformations(
                 keys=["image", "label"],
                 label_key="label",
                 spatial_size=(
-                    3*spatial_size, 
-                    3*spatial_size, 
-                    3*spatial_size
+                    2*spatial_size, 
+                    2*spatial_size, 
+                    2*spatial_size
                 ),
                 pos=1,
                 neg=1,

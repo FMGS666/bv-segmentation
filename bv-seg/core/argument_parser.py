@@ -61,12 +61,6 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             default = None
         )
         self.add_argument(
-            '-S', 
-            '--shuffle',
-            help = "Whether to shuffle observations or not for the K-Fold Cross Validation",
-            action = "store_true"
-        )
-        self.add_argument(
             '-c', 
             '--context-length',
             type = int,
@@ -87,7 +81,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             '--subsample',
             help = "Whether to subsample the full slices for creating volumes",
             action = "store_true"
-        ) 
+        )
         self.add_argument(
             '-vp', 
             '--volumes-path',
@@ -135,14 +129,6 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             help = "The learning rate which to start the tuning with",
             required = False,
             default = 8e-4
-        )
-        self.add_argument(
-            '-wd', 
-            '--weight-decay',
-            type = float,
-            help = "The weight decay for the Adam(W) optimizers",
-            required = False,
-            default = 1e-5
         )
         self.add_argument(
             '-ri', 

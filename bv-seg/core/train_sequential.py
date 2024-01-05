@@ -1,4 +1,5 @@
 import os
+import gc
 
 import torch
 from torch import cuda
@@ -76,23 +77,6 @@ def train(
             )
             #model.to(device)
             print("Model parallelized")
-        print("Defining optimization modules")
-        optimizer = AdamW(
-            model.parameters(),
-            lr = initial_learning_rate, 
-            weight_decay = weight_decay
-        )
-        scheduler = CosineAnnealingLR(
-            optimizer, 
-            epochs
-        )
-        warmup = LinearWarmup(
-            optimizer, 
-            warmup_period
-        )
-        loss_function = DiceCELoss(sigmoid = True)
-        print("Optimization modules defined")
-        print("Creating data loaders for current splits")
         splits_data_loaders = create_data_loaders_from_splits_metadata(
             split_to_train,
             splits_metadata_path,
@@ -105,6 +89,23 @@ def train(
         for (dataset_name, dataset_id, split_id, train_data_loader, validation_data_loader) in splits_data_loaders:
             print(f"Currently retrieving {dataset_name} ({dataset_id=}), {split_id=}")
             if split_id == split_to_train:
+                print("Defining optimization modules")
+                optimizer = AdamW(
+                    model.parameters(),
+                    lr = initial_learning_rate, 
+                    weight_decay = weight_decay
+                )
+                scheduler = CosineAnnealingLR(
+                    optimizer, 
+                    epochs
+                )
+                warmup = LinearWarmup(
+                    optimizer, 
+                    warmup_period
+                )
+                loss_function = DiceCELoss(sigmoid = True)
+                print("Optimization modules defined")
+                print("Creating data loaders for current splits")
                 print(f"Initiating training on {dataset_name} ({dataset_id=}), {split_id=} ({split_to_train=})")
                 trainer = BVSegSwinUnetRTraining(
                     model,
@@ -127,4 +128,6 @@ def train(
                     overlap = overlap
                 )
                 trainer.fit()
+                del trainer, optimizer, scheduler, warmup, loss_function
+                gc.collect()
                 torch.cuda.empty_cache()      
