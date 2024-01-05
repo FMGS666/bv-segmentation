@@ -133,7 +133,7 @@ def predict(
             use_checkpoint=True,
         ).to(device)
         model.load_from(weights = weight)
-        #model.to(device)
+        model.to(device)
         dataset_names = os.listdir(test_metadata_path)
         predictions = dict()
         for dataset_name in dataset_names:
@@ -148,12 +148,14 @@ def predict(
                 data=test_files, transform=test_transforms
             )
             test_loader = ThreadDataLoader(test_ds, num_workers=0, batch_size=1, shuffle=True)
-            for batch in test_loader:
-                x = batch["image"]
-                x = torch.squeeze(x, dim = 0)
-                logit_map = model(x)
-                del x, logit_map
-                gc.collect()
-                torch.cuda.empty_cache()
-                predictions["dataset_name"] = logit_map
+            with torch.no_grad():
+                for batch in test_loader:
+                    x = batch["image"]
+                    x = torch.squeeze(x, dim = 0)
+                    x = x.to(device)
+                    logit_map = model(x)
+                    del x, logit_map
+                    gc.collect()
+                    torch.cuda.empty_cache()
+                    predictions["dataset_name"] = logit_map
         models_predictions.append(predictions)
