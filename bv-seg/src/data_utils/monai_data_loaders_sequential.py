@@ -31,7 +31,8 @@ def create_data_loaders_from_splits_metadata(
     for dataset_id, dataset_name in enumerate(dataset_names):
         if skip and dataset_name in skip:
             continue
-        if dataset_name in ["kidney_1_voi", "kidney_2"]:
+        #if dataset_name in ["kidney_1_voi", "kidney_2"]:
+        if dataset_name in []:
             cache_num = 1
         else:
             cache_num = 2

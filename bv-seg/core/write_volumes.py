@@ -11,8 +11,6 @@ def write_volumes(
     ) -> None:
     train_data_path = args.train_data_path
     K = args.K
-    random_state = args.random_state
-    shuffle = args.shuffle
     splits_metadata_path = os.path.join(
         args.metadata_base_path,
         "individual_datasets"
@@ -37,8 +35,8 @@ def write_volumes(
         dataset_name: k_fold_split_iterable_folder(
             dataset_iterable_folder,
             K = K,
-            random_state = random_state,
-            shuffle = shuffle
+            random_state = None,
+            shuffle = False
         ) for dataset_name, dataset_iterable_folder in train_iterable_folders.items()
     }
     train_datasets_splits_paths = {
