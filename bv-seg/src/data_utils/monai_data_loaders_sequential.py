@@ -42,7 +42,7 @@ def create_data_loaders_from_splits_metadata(
         )
         splits = os.listdir(dataset_path)
         for split_id, split in enumerate(splits):
-            if skip and dataset_name in skip:
+            if skip and f"{dataset_name}:{split_id}" in skip:
                 continue
             if split_id != split_to_train:
                 continue
