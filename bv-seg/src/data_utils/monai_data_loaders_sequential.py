@@ -3,6 +3,7 @@ f"""
 """
 import os
 import gc
+import torch
 
 from monai.data import (
     ThreadDataLoader,
