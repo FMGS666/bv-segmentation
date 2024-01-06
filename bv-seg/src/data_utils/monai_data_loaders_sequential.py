@@ -28,9 +28,8 @@ def create_data_loaders_from_splits_metadata(
     """
     result_dictionary = dict()
     dataset_names = os.listdir(splits_metadata_path)
+
     for dataset_id, dataset_name in enumerate(dataset_names):
-        if skip and dataset_name in skip:
-            continue
         #if dataset_name in ["kidney_1_voi", "kidney_2"]:
         if dataset_name in []:
             cache_num = 1
@@ -43,6 +42,8 @@ def create_data_loaders_from_splits_metadata(
         )
         splits = os.listdir(dataset_path)
         for split_id, split in enumerate(splits):
+            if skip and dataset_name in skip:
+                continue
             if split_id != split_to_train:
                 continue
             split_metadata_path = os.path.join(
