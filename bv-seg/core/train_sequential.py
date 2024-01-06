@@ -43,6 +43,7 @@ def train(
     data_parallel = args.data_parallel
     skip = args.skip
     feature_size = args.feature_size
+    pretrained_path = args.pretrained_path
     # creating the data loader
     torch.backends.cudnn.benchmark = True
     train_transforms, val_transforms, test_transforms = get_monai_transformations(
@@ -67,7 +68,7 @@ def train(
         print("Model initialized")
         if load_pre_trained:
             print("Loading pre-trained weights")
-            weight = torch.load("models/pretrained/model_swinvit.pt")
+            weight = torch.load(pretrained_path)
             model.load_from(weights=weight)
             model.to(device)
             print("Pre trained weights loaded")

@@ -27,7 +27,14 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             required = False,
             default = "./data/splits_metadata/"
         )
-
+        self.add_argument(
+            '-ptp', 
+            '---pretrained-path',
+            type = str,
+            help = "The path where to load the pretrained weights from",
+            required = False,
+            default = "./models/pretrained/model_swinvit.pt"
+        )
         self.add_argument(
             '-trdp', 
             '--train-data-path',
