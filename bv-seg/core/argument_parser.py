@@ -225,7 +225,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             default = 48
         )
         self.add_argument(
-            '-ptp',
+            '-ptpd',
             '--paths-to-predictors',
             help = "List of paths which to load the predictors from",
             nargs = '+'
