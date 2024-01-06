@@ -11,12 +11,14 @@ from .core.write_volumes import write_volumes
 from .core.train_merged import train as train_merged
 from .core.train_sequential import train as train_sequential
 from .core.predict import predict
+from .core.debug import debug
 
 supported_commands = [
     "write-volumes",
     "train-merged",
     "train-sequential",
-    "predict"
+    "predict",
+    "debug"
 ]
 
 datasets = [
@@ -55,5 +57,10 @@ if __name__ == "__main__":
         predict(
             args,
             device,
+        )
+    if args.command == "debug":
+        debug(
+            args,
+            device
         )
     

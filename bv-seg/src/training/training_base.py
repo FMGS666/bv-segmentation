@@ -386,5 +386,6 @@ class BVSegTraining(object):
                 if self.n_epochs_with_no_progress > self.patience:
                     print(f"patience reached, quitting the training")
                     break
+        self.dump_model()
         return min(self.history["validation_loss"]) if self.decrease \
             else max(self.history["validation_loss"])

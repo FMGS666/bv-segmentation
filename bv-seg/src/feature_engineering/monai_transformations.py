@@ -44,6 +44,11 @@ def get_monai_transformations(
                 b_max=1.0,
                 clip=True,
             ),
+            Spacingd(
+                keys=["image", "label"],
+                pixdim=(1.5, 1.5, 2.0),
+                mode=("bilinear", "nearest"),
+            ),
             RandCropByPosNegLabeld(
                 keys=["image", "label"],
                 label_key="label",
