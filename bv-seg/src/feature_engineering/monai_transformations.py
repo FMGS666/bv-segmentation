@@ -35,9 +35,8 @@ def get_monai_transformations(
             LoadImaged(keys=["image", "label"], ensure_channel_first = True),
             #NormalizeIntensityd(keys=["image"]),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
-            EnsureTyped(keys=["image", "label"], device=device, track_meta=False),
             ScaleIntensityRanged(
-                keys=["label"],
+                keys=["image"],
                 a_min=0,
                 a_max=2**16,
                 b_min=0.0,
@@ -57,6 +56,7 @@ def get_monai_transformations(
                 pixdim=(2.0, 2.0, 2.0),
                 mode=("bilinear", "nearest"),
             ),
+            EnsureTyped(keys=["image", "label"], device=device, track_meta=False),
             RandCropByPosNegLabeld(
                 keys=["image", "label"],
                 label_key="label",
@@ -104,7 +104,7 @@ def get_monai_transformations(
             LoadImaged(keys=["image", "label"], ensure_channel_first = True),
             #NormalizeIntensityd(keys=["image"]),
             ScaleIntensityRanged(
-                keys=["label"],
+                keys=["image"],
                 a_min=0,
                 a_max=2**16,
                 b_min=0.0,
@@ -121,12 +121,12 @@ def get_monai_transformations(
             ),
             CropForegroundd(keys=["image", "label"], source_key="image", allow_smaller = False),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
-            EnsureTyped(keys=["image", "label"], device=device, track_meta=True),
             Spacingd(
                 keys=["image", "label"],
                 pixdim=(2.0, 2.0, 2.0),
                 mode=("bilinear", "nearest"),
             ),
+            EnsureTyped(keys=["image", "label"], device=device, track_meta=True),
             RandCropByPosNegLabeld(
                 keys=["image", "label"],
                 label_key="label",
@@ -179,7 +179,15 @@ def get_monai_transformations(
     test_transforms = Compose(
         [
             LoadImaged(keys=["image"], ensure_channel_first = True), 
-            NormalizeIntensityd(keys=["image"]),
+            #NormalizeIntensityd(keys=["image"]),
+            ScaleIntensityRanged(
+                keys=["image"],
+                a_min=0,
+                a_max=2**16,
+                b_min=0.0,
+                b_max=1.0,
+                clip=True,
+            ),
             Orientationd(keys=["image"], axcodes="RAS"),
             EnsureTyped(keys=["image"], device=device, track_meta=True),
             Padd(
