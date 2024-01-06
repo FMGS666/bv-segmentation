@@ -243,7 +243,8 @@ class BVSegTraining(object):
         raise NotImplementedError
 
     def dump_path(
-            self
+            self,
+            final = False
         ) -> str | Path:
         """
         Arguments: 
@@ -252,7 +253,7 @@ class BVSegTraining(object):
         Returns: 
             * `str | Path` -> the directory where to save the latest checkpoint
         """
-        target_dir = os.path.join(self.dump_dir, f"#{self.n_saved_models}")
+        target_dir = os.path.join(self.dump_dir, "-final" if final else f"#{self.n_saved_models}")
         return target_dir
 
     def track_validation_progress(
@@ -275,7 +276,8 @@ class BVSegTraining(object):
             else (current_loss - current_best_loss) > self.tollerance
     
     def dump_model(
-            self
+            self,
+            final = False
         ) -> None:
         """
         Arguments: 
@@ -288,7 +290,7 @@ class BVSegTraining(object):
         Checkpoints the training session by saving to disk the latest 
         state dictionary for the model and the optimizer
         """
-        dump_path = self.dump_path()
+        dump_path = self.dump_path(final = final)
         os.mkdir(dump_path)
         torch.save(
             self.model.state_dict(), 
@@ -386,6 +388,6 @@ class BVSegTraining(object):
                 if self.n_epochs_with_no_progress > self.patience:
                     print(f"patience reached, quitting the training")
                     break
-        self.dump_model()
+        self.dump_model(final=True)
         return min(self.history["validation_loss"]) if self.decrease \
             else max(self.history["validation_loss"])

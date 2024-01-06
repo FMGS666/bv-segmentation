@@ -33,9 +33,17 @@ def get_monai_transformations(
     train_transforms = Compose(
         [
             LoadImaged(keys=["image", "label"], ensure_channel_first = True),
-            NormalizeIntensityd(keys=["image"]),
+            #NormalizeIntensityd(keys=["image"]),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
             EnsureTyped(keys=["image", "label"], device=device, track_meta=False),
+            ScaleIntensityRanged(
+                keys=["label"],
+                a_min=0,
+                a_max=2**16,
+                b_min=0.0,
+                b_max=1.0,
+                clip=True,
+            ),
             ScaleIntensityRanged(
                 keys=["label"],
                 a_min=0,
@@ -46,7 +54,7 @@ def get_monai_transformations(
             ),
             Spacingd(
                 keys=["image", "label"],
-                pixdim=(1.5, 1.5, 2.0),
+                pixdim=(2.0, 2.0, 2.0),
                 mode=("bilinear", "nearest"),
             ),
             RandCropByPosNegLabeld(
@@ -94,7 +102,15 @@ def get_monai_transformations(
     val_transforms = Compose(
         [
             LoadImaged(keys=["image", "label"], ensure_channel_first = True),
-            NormalizeIntensityd(keys=["image"]),
+            #NormalizeIntensityd(keys=["image"]),
+            ScaleIntensityRanged(
+                keys=["label"],
+                a_min=0,
+                a_max=2**16,
+                b_min=0.0,
+                b_max=1.0,
+                clip=True,
+            ),
             ScaleIntensityRanged(
                 keys=["label"],
                 a_min=0,
@@ -106,6 +122,11 @@ def get_monai_transformations(
             CropForegroundd(keys=["image", "label"], source_key="image", allow_smaller = False),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
             EnsureTyped(keys=["image", "label"], device=device, track_meta=True),
+            Spacingd(
+                keys=["image", "label"],
+                pixdim=(2.0, 2.0, 2.0),
+                mode=("bilinear", "nearest"),
+            ),
             RandCropByPosNegLabeld(
                 keys=["image", "label"],
                 label_key="label",
