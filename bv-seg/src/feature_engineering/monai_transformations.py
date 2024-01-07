@@ -24,6 +24,7 @@ from monai.transforms import (
     Spacingd,
     RandRotate90d,
     EnsureTyped,
+    DivisblePadd
 )
 
 def get_monai_transformations(
@@ -142,6 +143,7 @@ def get_monai_transformations(
                 num_samples=1,
                 image_key="image",
                 image_threshold=0,
+                allow_smaller=True
             ),
             RandFlipd(
                 keys=["image", "label"],
@@ -184,7 +186,7 @@ def get_monai_transformations(
             ),
             Orientationd(keys=["image"], axcodes="RAS"),
             EnsureTyped(keys=["image"], device=device, track_meta=True),
-            padder = DivisblePad(keys= ["image","label"],k=patch_size, allow_missing_keys = True)
+            DivisblePadd(keys= ["image","label"],k=patch_size, allow_missing_keys = True)
         ]
     )
     return train_transforms, val_transforms, test_transforms

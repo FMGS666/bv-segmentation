@@ -2,17 +2,19 @@ import os
 import gc
 import torch
 
+import pandas as pd 
+
+from patchify import patchify, unpatchify
 from collections import defaultdict
 from monai.networks.nets import SwinUNETR
 from monai.data import Dataset, CacheDataset, ThreadDataLoader, load_decathlon_datalist
-from monai.transform import AsDiscrete, DivisblePad
+from monai.transform import AsDiscrete
+
 from ..src.file_loaders.tif_file_loader import TifFileLoader
 from ..src.file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
 from ..src.data_utils.utils import get_volumes_fold_splits, get_datasets_from_data_path, dump_dataset_metadata
 from ..src.feature_engineering.monai_transformations import get_monai_transformations
 from ..src.volumes.write_volumes import write_volumes_to_tif
-from patchify import patchify, unpatchify
-import pandas as pd 
 
 
 def predict(
@@ -178,6 +180,7 @@ def predict(
                     models_predictions[dataset_name].append(logit_map)
     
     post_pred = AsDiscrete(threshold = 0.0)
+
     def rle_encode(mask):
         pixel = mask.flatten()
         pixel = np.concatenate([[0], pixel, [0]])
@@ -187,6 +190,7 @@ def predict(
         if rle == '':
             rle = '1 0'
         return rle
+        
     submission = []
     for dataset_name, predictions in models_predictions.items():
         target_shape = dataset_shape[dataset_name]
