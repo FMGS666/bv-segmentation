@@ -5,12 +5,15 @@ import torch
 from collections import defaultdict
 from monai.networks.nets import SwinUNETR
 from monai.data import Dataset, CacheDataset, ThreadDataLoader, load_decathlon_datalist
-
+from monai.transform import AsDiscrete, DivisblePad
 from ..src.file_loaders.tif_file_loader import TifFileLoader
 from ..src.file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
 from ..src.data_utils.utils import get_volumes_fold_splits, get_datasets_from_data_path, dump_dataset_metadata
 from ..src.feature_engineering.monai_transformations import get_monai_transformations
 from ..src.volumes.write_volumes import write_volumes_to_tif
+from patchify import patchify, unpatchify
+import pandas as pd 
+
 
 def predict(
         args,
@@ -22,12 +25,18 @@ def predict(
     write_test_volumes = args.write_test_volumes
     feature_size = args.feature_size
     patch_size = args.patch_size
+    submission_name = args.submission_name
+    submission_path = args.submission_path
     test_volumes_path = args.volumes_path + "_test"
     left_pad = args.left_pad
     right_pad = args.right_pad
     test_metadata_path = os.path.join(
         args.metadata_base_path,
         "test"
+    )
+    submission_path = os.path.join(
+        submission_path,
+        f"{submission_name}-submission.csv"
     )
     print(f"{test_metadata_path=}, {test_volumes_path=}")
     try: 
@@ -50,7 +59,7 @@ def predict(
             patch_size,
             device,
             left_pad=left_pad,
-            right_pad= right_pad
+            right_pad=right_pad
         )
 
         test_groups = {
@@ -125,6 +134,7 @@ def predict(
         device
     )
     models_predictions = defaultdict(list)
+    dataset_shape = dict()
     for weight in weights:
         model = SwinUNETR(
             img_size=(
@@ -155,15 +165,48 @@ def predict(
             test_loader = ThreadDataLoader(test_ds, num_workers=0, batch_size=1, shuffle=True)
             with torch.no_grad():
                 for batch in test_loader:
-                    x = batch["image"]
-                    x = torch.squeeze(x, dim = 0)
+                    x = batch["image"].cpu()
+                    x = x.numpy()
+                    dataset_shape[dataset_name] = x.shape
+                    x = patchify(x)
+                    x = torch.from_numpy(x)
                     x = x.to(device)
                     logit_map = model(x)
                     del x, logit_map
                     gc.collect()
                     torch.cuda.empty_cache()
                     models_predictions[dataset_name].append(logit_map)
-
-        
-                
     
+    post_pred = AsDiscrete(threshold = 0.0)
+    def rle_encode(mask):
+        pixel = mask.flatten()
+        pixel = np.concatenate([[0], pixel, [0]])
+        run = np.where(pixel[1:] != pixel[:-1])[0] + 1
+        run[1::2] -= run[::2]
+        rle = ' '.join(str(r) for r in run)
+        if rle == '':
+            rle = '1 0'
+        return rle
+    submission = []
+    for dataset_name, predictions in models_predictions.items():
+        target_shape = dataset_shape[dataset_name]
+        predictions = [torch.squeeze(prediction) for prediction in predictions]
+        predictions = torch.stack(predictions,dim=0)
+        predictions = torch.mean(predictions, dim=0)
+        predictions = post_pred(predictions)
+        predictions = predictions.numpy()
+        predictions = unpatchify(predictions,target_shape)
+        predictions = torch.from_numpy(predictions)
+        predictions = {"label": predictions}
+        predictions = test_transforms.inverse(predictions)["label"]
+        predictions = predictions.numpy()
+        for idx, prediction in enumerate(predictions):
+            rle_predictions = rle_encode(prediction)
+            id = f"{dataset_name}_000{idx}"
+            submission_data = {"id": id, "rle": rle_predictions}
+            current_submission = pd.DataFrame(data= submission_data, index=[0])
+            submission.append(current_submission)
+    submission_df = pd.concat(submission)
+    submission_df.to_csv(submission_path, index=False)
+    
+

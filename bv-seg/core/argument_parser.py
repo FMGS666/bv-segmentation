@@ -252,3 +252,19 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             help = "Whether to write test volumes during prediction",
             action = "store_true"
         )
+        self.add_argument(
+            '-sbn', 
+            '---submission-name',
+            type = str,
+            help = "The name of the submission",
+            required = False,
+            default = "./data/splits_metadata/"
+        )
+        self.add_argument(
+            '-sbp', 
+            '---submission-path',
+            type = str,
+            help = "The path to the submission",
+            required = False,
+            default = "./submissions"
+        )

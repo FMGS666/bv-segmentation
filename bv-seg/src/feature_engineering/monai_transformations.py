@@ -28,7 +28,9 @@ from monai.transforms import (
 
 def get_monai_transformations(
         spatial_size,
-        device
+        device,
+        left_pad = 62,
+        right_pad = 62
     ):
     train_transforms = Compose(
         [
@@ -168,33 +170,13 @@ def get_monai_transformations(
             )
         ]
     )
-    test_padder = Pad(
-        to_pad = [
-            (0, 0),
-            (62, 63), 
-            (0, 0), 
-            (0, 0)
-        ]
-    )
     test_transforms = Compose(
         [
             LoadImaged(keys=["image"], ensure_channel_first = True), 
             NormalizeIntensityd(keys=["image"]),
             Orientationd(keys=["image"], axcodes="RAS"),
             EnsureTyped(keys=["image"], device=device, track_meta=True),
-            Padd(
-                keys="image",
-                padder = test_padder
-            ),
-            GridPatchd(
-                keys=["image"],
-                patch_size=(
-                    spatial_size, 
-                    spatial_size, 
-                    spatial_size
-                ),
-                pad_mode="constant"
-            )
+            padder = DivisblePad(keys= ["image","label"],k=patch_size, allow_missing_keys = True)
         ]
     )
     return train_transforms, val_transforms, test_transforms
