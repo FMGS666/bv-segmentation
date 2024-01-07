@@ -8,7 +8,7 @@ from patchify import patchify, unpatchify
 from collections import defaultdict
 from monai.networks.nets import SwinUNETR
 from monai.data import Dataset, CacheDataset, ThreadDataLoader, load_decathlon_datalist
-from monai.transform import AsDiscrete
+from monai.transforms import AsDiscrete
 
 from ..src.file_loaders.tif_file_loader import TifFileLoader
 from ..src.file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
@@ -137,7 +137,7 @@ def predict(
     )
     models_predictions = defaultdict(list)
     dataset_shape = dict()
-    for weight in weights:
+    for idx, weight in enumerate(weights):
         model = SwinUNETR(
             img_size=(
                 patch_size, 
@@ -154,6 +154,7 @@ def predict(
         dataset_names = os.listdir(test_metadata_path)
         predictions = dict()
         for dataset_name in dataset_names:
+            print(f"runnning predictions on {dataset_name} with weights_{idx}")
             dataset_metadata_dir = os.path.join(test_metadata_path, dataset_name)
             dataset_metadata_file = os.listdir(dataset_metadata_dir)[0]
             dataset_metadata_file = os.path.join(
@@ -190,7 +191,8 @@ def predict(
         if rle == '':
             rle = '1 0'
         return rle
-        
+
+    print("running post processing")
     submission = []
     for dataset_name, predictions in models_predictions.items():
         target_shape = dataset_shape[dataset_name]

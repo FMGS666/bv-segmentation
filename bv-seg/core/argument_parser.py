@@ -258,7 +258,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             type = str,
             help = "The name of the submission",
             required = False,
-            default = "./data/splits_metadata/"
+            default = "submission"
         )
         self.add_argument(
             '-sbp', 
