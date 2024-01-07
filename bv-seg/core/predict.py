@@ -23,6 +23,8 @@ def predict(
     feature_size = args.feature_size
     patch_size = args.patch_size
     test_volumes_path = args.volumes_path + "_test"
+    left_pad = args.left_pad
+    right_pad = args.right_pad
     test_metadata_path = os.path.join(
         args.metadata_base_path,
         "test"
@@ -46,7 +48,9 @@ def predict(
         }
         _, _, test_transforms = get_monai_transformations(
             patch_size,
-            device
+            device,
+            left_pad=left_pad,
+            right_pad= right_pad
         )
 
         test_groups = {
@@ -159,4 +163,7 @@ def predict(
                     gc.collect()
                     torch.cuda.empty_cache()
                     models_predictions[dataset_name].append(logit_map)
+
+        
+                
     
