@@ -186,7 +186,7 @@ def get_monai_transformations(
             ),
             Orientationd(keys=["image"], axcodes="RAS"),
             EnsureTyped(keys=["image"], device=device, track_meta=True),
-            DivisiblePadd(keys= ["image","label"],k=patch_size, allow_missing_keys = True)
+            DivisiblePadd(keys= ["image","label"],k=spatial_size, allow_missing_keys = True)
         ]
     )
     return train_transforms, val_transforms, test_transforms

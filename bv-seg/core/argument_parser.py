@@ -60,7 +60,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             default = 3
         )
         self.add_argument(
-            '-lp', 
+            '-lpd', 
             '--left-pad',
             type = int,
             help = "left padding for the test volumes",
@@ -68,7 +68,7 @@ class BVSegArgumentParser(argparse.ArgumentParser):
             default = 62
         )
         self.add_argument(
-            '-rp', 
+            '-rpd', 
             '--right-pad',
             type = int,
             help = "right padding for the test volumes",

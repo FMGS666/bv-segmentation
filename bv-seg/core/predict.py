@@ -9,6 +9,8 @@ from collections import defaultdict
 from monai.networks.nets import SwinUNETR
 from monai.data import Dataset, CacheDataset, ThreadDataLoader, load_decathlon_datalist
 from monai.transforms import AsDiscrete
+from monai.transforms.utils import allow_missing_keys_mode
+from monai.data.meta_tensor import MetaTensor
 
 from ..src.file_loaders.tif_file_loader import TifFileLoader
 from ..src.file_loaders.tif_iterable_folder import Tif3DVolumeIterableFolder
@@ -137,6 +139,7 @@ def predict(
     )
     models_predictions = defaultdict(list)
     dataset_shape = dict()
+    dataset_patch_dimension = dict()
     for idx, weight in enumerate(weights):
         model = SwinUNETR(
             img_size=(
@@ -171,15 +174,25 @@ def predict(
                     x = batch["image"].cpu()
                     x = x.numpy()
                     dataset_shape[dataset_name] = x.shape
-                    x = patchify(x)
-                    x = torch.from_numpy(x)
-                    x = x.to(device)
-                    logit_map = model(x)
-                    del x, logit_map
+                    x = patchify(x, patch_size, step = patch_size)
+                    dataset_patch_dimension[dataset_name] = x.shape[:3]
+                    x = x.reshape(-1, 1, patch_size, patch_size, patch_size)
+                    current_predictions = []
+                    for minibatch in x:
+                        minibatch = torch.from_numpy(minibatch)
+                        minibatch = torch.reshape(minibatch, (1, 1, patch_size, patch_size, patch_size))
+                        minibatch = minibatch.to(device)
+                        logit_map = model(minibatch).cpu()
+                        current_predictions.append(logit_map)
+                        del minibatch, logit_map
+                        gc.collect()
+                        torch.cuda.empty_cache()
+                    del x 
                     gc.collect()
                     torch.cuda.empty_cache()
-                    models_predictions[dataset_name].append(logit_map)
-    
+                    current_predictions = torch.stack(current_predictions,dim=0)
+                    models_predictions[dataset_name].append(current_predictions)
+
     post_pred = AsDiscrete(threshold = 0.0)
 
     def rle_encode(mask):
@@ -196,15 +209,19 @@ def predict(
     submission = []
     for dataset_name, predictions in models_predictions.items():
         target_shape = dataset_shape[dataset_name]
+        target_patch_shape = dataset_patch_dimension[dataset_name]
         predictions = [torch.squeeze(prediction) for prediction in predictions]
         predictions = torch.stack(predictions,dim=0)
         predictions = torch.mean(predictions, dim=0)
         predictions = post_pred(predictions)
         predictions = predictions.numpy()
+        predictions = predictions.reshape(*target_patch_shape, patch_size, patch_size, patch_size)
         predictions = unpatchify(predictions,target_shape)
         predictions = torch.from_numpy(predictions)
-        predictions = {"label": predictions}
-        predictions = test_transforms.inverse(predictions)["label"]
+        predictions_dict = {"label": MetaTensor(predictions)}
+        assert isinstance(predictions_dict, dict)
+        with allow_missing_keys_mode(test_transforms):
+            predictions = test_transforms.inverse(data = predictions_dict)["label"]
         predictions = predictions.numpy()
         for idx, prediction in enumerate(predictions):
             rle_predictions = rle_encode(prediction)
