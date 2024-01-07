@@ -8,7 +8,7 @@ from patchify import patchify, unpatchify
 from collections import defaultdict
 from monai.networks.nets import SwinUNETR
 from monai.data import Dataset, CacheDataset, ThreadDataLoader, load_decathlon_datalist
-from monai.transforms import AsDiscrete
+from monai.transforms import AsDiscrete, Compose
 from monai.transforms.utils import allow_missing_keys_mode
 from monai.data.meta_tensor import MetaTensor
 
@@ -218,10 +218,11 @@ def predict(
         predictions = predictions.reshape(*target_patch_shape, patch_size, patch_size, patch_size)
         predictions = unpatchify(predictions,target_shape)
         predictions = torch.from_numpy(predictions)
-        predictions_dict = {"label": MetaTensor(predictions)}
+        test_post_pred = Compose([test_transforms.transforms[-1]])
+        predictions_dict = {"label": MetaTensor(predictions, applied_operations = test_post_pred)}
         assert isinstance(predictions_dict, dict)
         with allow_missing_keys_mode(test_transforms):
-            predictions = test_transforms.inverse(data = predictions_dict)["label"]
+            predictions = test_post_pred.inverse(data = predictions_dict)["label"]
         predictions = predictions.numpy()
         for idx, prediction in enumerate(predictions):
             rle_predictions = rle_encode(prediction)
