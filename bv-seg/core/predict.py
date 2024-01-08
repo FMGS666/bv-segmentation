@@ -3,6 +3,7 @@ import gc
 import torch
 
 import pandas as pd 
+import numpy as np
 
 from patchify import patchify, unpatchify
 from collections import defaultdict
@@ -140,6 +141,7 @@ def predict(
     models_predictions = defaultdict(list)
     dataset_shape = dict()
     dataset_patch_dimension = dict()
+    dataset_applied_operations = dict()
     for idx, weight in enumerate(weights):
         model = SwinUNETR(
             img_size=(
@@ -156,7 +158,7 @@ def predict(
         model.to(device)
         dataset_names = os.listdir(test_metadata_path)
         predictions = dict()
-        for dataset_name in dataset_names:
+        for idx, dataset_name in enumerate(dataset_names):
             print(f"runnning predictions on {dataset_name} with weights_{idx}")
             dataset_metadata_dir = os.path.join(test_metadata_path, dataset_name)
             dataset_metadata_file = os.listdir(dataset_metadata_dir)[0]
@@ -171,7 +173,9 @@ def predict(
             test_loader = ThreadDataLoader(test_ds, num_workers=0, batch_size=1, shuffle=True)
             with torch.no_grad():
                 for batch in test_loader:
-                    x = batch["image"].cpu()
+                    dataset_applied_operations[dataset_name] = batch["image"].applied_operations
+                    x = batch["image"].detach().cpu()
+                    x = torch.squeeze(x)
                     x = x.numpy()
                     dataset_shape[dataset_name] = x.shape
                     x = patchify(x, patch_size, step = patch_size)
@@ -182,7 +186,7 @@ def predict(
                         minibatch = torch.from_numpy(minibatch)
                         minibatch = torch.reshape(minibatch, (1, 1, patch_size, patch_size, patch_size))
                         minibatch = minibatch.to(device)
-                        logit_map = model(minibatch).cpu()
+                        logit_map = model(minibatch).detach().cpu()
                         current_predictions.append(logit_map)
                         del minibatch, logit_map
                         gc.collect()
@@ -218,11 +222,11 @@ def predict(
         predictions = predictions.reshape(*target_patch_shape, patch_size, patch_size, patch_size)
         predictions = unpatchify(predictions,target_shape)
         predictions = torch.from_numpy(predictions)
-        test_post_pred = Compose([test_transforms.transforms[-1]])
-        predictions_dict = {"label": MetaTensor(predictions, applied_operations = test_post_pred)}
+        test_post_pred = Compose([dataset_applied_operations[dataset_name][-1]])
+        predictions_dict = {"label": MetaTensor(predictions, applied_operations = test_post_pred.transforms)}
         assert isinstance(predictions_dict, dict)
-        with allow_missing_keys_mode(test_transforms):
-            predictions = test_post_pred.inverse(data = predictions_dict)["label"]
+        #with allow_missing_keys_mode(test_post_pred):
+        predictions = test_post_pred.inverse(data = predictions_dict)["label"]
         predictions = predictions.numpy()
         for idx, prediction in enumerate(predictions):
             rle_predictions = rle_encode(prediction)

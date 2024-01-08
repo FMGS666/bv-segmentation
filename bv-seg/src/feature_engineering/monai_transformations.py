@@ -28,7 +28,7 @@ from monai.transforms import (
 )
 
 def get_monai_transformations(
-        spatial_size,
+        patch_size,
         device,
         left_pad = 62,
         right_pad = 62
@@ -63,10 +63,10 @@ def get_monai_transformations(
             RandCropByPosNegLabeld(
                 keys=["image", "label"],
                 label_key="label",
-                spatial_size=(
-                    spatial_size, 
-                    spatial_size, 
-                    spatial_size
+                patch_size=(
+                    patch_size, 
+                    patch_size, 
+                    patch_size
                 ),
                 pos=1,
                 neg=1,
@@ -133,10 +133,10 @@ def get_monai_transformations(
             RandCropByPosNegLabeld(
                 keys=["image", "label"],
                 label_key="label",
-                spatial_size=(
-                    2*spatial_size, 
-                    2*spatial_size, 
-                    2*spatial_size
+                patch_size=(
+                    2*patch_size, 
+                    2*patch_size, 
+                    2*patch_size
                 ),
                 pos=1,
                 neg=1,
@@ -186,7 +186,7 @@ def get_monai_transformations(
             ),
             Orientationd(keys=["image"], axcodes="RAS"),
             EnsureTyped(keys=["image"], device=device, track_meta=True),
-            DivisiblePadd(keys= ["image","label"],k=spatial_size, allow_missing_keys = True)
+            DivisiblePadd(keys= ["image","label"],k=patch_size, allow_missing_keys = True)
         ]
     )
     return train_transforms, val_transforms, test_transforms
